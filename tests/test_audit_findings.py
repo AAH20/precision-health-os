@@ -75,6 +75,7 @@ class TestAcknowledgeAlertActuallyAcknowledges:
 
     def _api_with_active_alert(self) -> tuple[PrecisionHealthAPI, str]:
         api = PrecisionHealthAPI()
+        api.rbac.assign_role("dr_smith", "physician")
         api.register_patient(
             Patient(
                 id="p1",

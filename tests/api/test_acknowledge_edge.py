@@ -11,7 +11,10 @@ from precision_health_os.models import Patient, VitalSigns
 
 @pytest.fixture
 def api():
-    return PrecisionHealthAPI()
+    api = PrecisionHealthAPI()
+    api.rbac.assign_role("user1", "physician")
+    api.rbac.assign_role("dr_smith", "physician")
+    return api
 
 
 @pytest.fixture

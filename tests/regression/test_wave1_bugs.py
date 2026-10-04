@@ -20,6 +20,7 @@ class TestAcknowledgeAlertAuditSemantics:
 
     def _setup_critical_alert(self) -> tuple[PrecisionHealthAPI, str]:
         api = PrecisionHealthAPI()
+        api.rbac.assign_role("dr.smith", "physician")
         patient = Patient(
             id="P-1",
             mrn="MRN-1",

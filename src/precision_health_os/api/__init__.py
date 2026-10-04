@@ -38,8 +38,10 @@ class PrecisionHealthAPI:
         self.event_bus.publish("patient.registered", {"patient_id": patient.id})
         return patient
 
-    def get_patient(self, patient_id: str) -> Patient | None:
-        """Get patient by ID."""
+    def get_patient(self, patient_id: str, user_id: str | None = None) -> Patient | None:
+        """Get patient by ID. Requires read permission if user_id is provided."""
+        if user_id is not None and not self.rbac.has_permission(user_id, "read"):
+            return None
         return self._patients.get(patient_id)
 
     def ingest_vitals(self, vitals: VitalSigns) -> list[ClinicalAlert]:
@@ -59,11 +61,15 @@ class PrecisionHealthAPI:
     def acknowledge_alert(self, alert_id: str, user_id: str) -> bool:
         """Acknowledge an alert and clear it from the active set.
 
-        Returns True when the alert exists and is acknowledged, so repeat calls
-        are idempotent rather than reporting failure for a completed action.
-        The audit event is recorded only on the transition, so re-acknowledging
-        does not fabricate a second clinical action in the trail.
+        Requires write permission. Returns True when the alert exists and is
+        acknowledged, so repeat calls are idempotent rather than reporting
+        failure for a completed action. The audit event is recorded only on
+        the transition, so re-acknowledging does not fabricate a second
+        clinical action in the trail.
         """
+        if not self.rbac.has_permission(user_id, "write"):
+            return False
+
         # Check if the alert is in the active set BEFORE acknowledging.
         # If it's not active, it was already acknowledged (or doesn't exist).
         was_active = any(a.id == alert_id for a in self._alert_manager.get_active_alerts())

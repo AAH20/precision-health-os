@@ -95,11 +95,12 @@ class TestBuildDashboardState:
 
         The original version acknowledged a fabricated id; the API now reports
         False for unknown alerts and does not audit them, so the test must use
-        an alert that actually exists.
+        an alert that actually exists. Also requires RBAC role assignment.
         """
         from precision_health_os.models import AlertSeverity, ClinicalAlert
 
         api = PrecisionHealthAPI()
+        api.rbac.assign_role("user1", "physician")
         api.register_patient(_make_patient("P001"))
         alert = api._alert_manager.add_alert(
             ClinicalAlert(

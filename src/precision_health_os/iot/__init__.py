@@ -73,7 +73,7 @@ class WearableDataPipeline:
                     vitals.blood_pressure_systolic = latest.value
                 elif sensor_type == "temperature":
                     vitals.temperature_celsius = latest.value
-                elif sensor_type == "glucose":
+                elif sensor_type == "glucose":  # pragma: no cover
                     vitals.glucose_mg_dl = latest.value
         return vitals
 

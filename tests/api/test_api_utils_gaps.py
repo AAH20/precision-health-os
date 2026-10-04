@@ -37,6 +37,8 @@ class TestAcknowledgeAlert:
 
     def setup_method(self) -> None:
         self.api = PrecisionHealthAPI()
+        self.api.rbac.assign_role("user-1", "physician")
+        self.api.rbac.assign_role("user-456", "physician")
 
     def test_acknowledge_alert_returns_bool(self) -> None:
         """Acknowledge a real active alert; unknown ids must report False.
