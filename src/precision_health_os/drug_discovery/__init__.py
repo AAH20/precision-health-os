@@ -174,13 +174,15 @@ class ClinicalTrialMatcher:
         for trial in trials:
             score = self._calculate_match_score(patient, trial)
             if score > 0:
-                matches.append({
-                    "trial_id": trial["id"],
-                    "trial_name": trial.get("name", ""),
-                    "score": score,
-                    "matching_criteria": self._get_matching_criteria(patient, trial),
-                    "failing_criteria": self._get_failing_criteria(patient, trial),
-                })
+                matches.append(
+                    {
+                        "trial_id": trial["id"],
+                        "trial_name": trial.get("name", ""),
+                        "score": score,
+                        "matching_criteria": self._get_matching_criteria(patient, trial),
+                        "failing_criteria": self._get_failing_criteria(patient, trial),
+                    }
+                )
 
         matches.sort(key=lambda x: x["score"], reverse=True)
         return matches
@@ -219,15 +221,17 @@ class ClinicalTrialMatcher:
 
         return min(score, 1.0)
 
-    def _get_matching_criteria(
-        self, patient: dict[str, Any], trial: dict[str, Any]
-    ) -> list[str]:
+    def _get_matching_criteria(self, patient: dict[str, Any], trial: dict[str, Any]) -> list[str]:
         """Get list of matching criteria."""
         matching: list[str] = []
         criteria = trial.get("eligibility_criteria", {})
 
         age = patient.get("age", 0)
-        if "min_age" in criteria and "max_age" in criteria and criteria["min_age"] <= age <= criteria["max_age"]:
+        if (
+            "min_age" in criteria
+            and "max_age" in criteria
+            and criteria["min_age"] <= age <= criteria["max_age"]
+        ):
             matching.append("age")
 
         patient_conditions = set(patient.get("conditions", []))
@@ -237,15 +241,17 @@ class ClinicalTrialMatcher:
 
         return matching
 
-    def _get_failing_criteria(
-        self, patient: dict[str, Any], trial: dict[str, Any]
-    ) -> list[str]:
+    def _get_failing_criteria(self, patient: dict[str, Any], trial: dict[str, Any]) -> list[str]:
         """Get list of failing criteria."""
         failing: list[str] = []
         criteria = trial.get("eligibility_criteria", {})
 
         age = patient.get("age", 0)
-        if "min_age" in criteria and "max_age" in criteria and not (criteria["min_age"] <= age <= criteria["max_age"]):
+        if (
+            "min_age" in criteria
+            and "max_age" in criteria
+            and not (criteria["min_age"] <= age <= criteria["max_age"])
+        ):
             failing.append("age")
 
         return failing

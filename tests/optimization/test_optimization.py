@@ -1,6 +1,5 @@
 """Tests for optimization module."""
 
-
 from precision_health_os.optimization import (
     BipartiteMatchingSolver,
     KnapsackSolver,
@@ -42,10 +41,7 @@ class TestVRPTimeWindowsSolver:
 
     def test_capacity_constraint(self) -> None:
         depot = Location(id="depot", x=0, y=0)
-        locations = [
-            Location(id=f"loc{i}", x=i, y=0, demand=60, service_time=5)
-            for i in range(5)
-        ]
+        locations = [Location(id=f"loc{i}", x=i, y=0, demand=60, service_time=5) for i in range(5)]
         solver = VRPTimeWindowsSolver(depot, vehicle_capacity=100)
         result = solver.solve(locations)
         for route in result:

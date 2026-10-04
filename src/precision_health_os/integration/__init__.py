@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import logging
-from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
@@ -84,9 +82,7 @@ class FHIRConverter:
             "id": medication.get("id", generate_id()),
             "status": "active",
             "intent": "order",
-            "medicationCodeableConcept": {
-                "text": medication.get("name", "")
-            },
+            "medicationCodeableConcept": {"text": medication.get("name", "")},
             "subject": {"reference": f"Patient/{medication.get('patient_id', '')}"},
             "dosageInstruction": [
                 {
@@ -105,8 +101,9 @@ class FHIRConverter:
         """Convert FHIR Patient resource to internal patient dict."""
         name = ""
         if fhir_data.get("name"):
-            name_parts = fhir_data["name"][0].get("given", []) + [
-                fhir_data["name"][0].get("family", "")
+            name_parts = [
+                *fhir_data["name"][0].get("given", []),
+                fhir_data["name"][0].get("family", ""),
             ]
             name = " ".join(filter(None, name_parts))
 
@@ -152,9 +149,15 @@ class HL7v2Parser:
     def create_adt(self, patient: dict[str, Any], event_type: str = "A08") -> str:
         """Create an HL7 ADT message."""
         timestamp = utcnow().strftime("%Y%m%d%H%M%S")
+        dob = patient.get("date_of_birth")
+        dob_str = dob.strftime("%Y%m%d") if isinstance(dob, datetime) else ""
+        pid = (
+            f"PID|1||{patient.get('mrn', '')}^{patient.get('id', '')}"
+            f"||{patient.get('name', '')}||{dob_str}|{patient.get('sex', 'U')}"
+        )
         segments = [
             f"MSH|^~\\&|PHOS|HOSPITAL|EHR|HOSPITAL|{timestamp}||ADT^{event_type}|{generate_id()}|P|2.5",
-            f"PID|1||{patient.get('mrn', '')}^{patient.get('id', '')}||{patient.get('name', '')}||{patient.get('date_of_birth', '').strftime('%Y%m%d') if isinstance(patient.get('date_of_birth'), datetime) else ''}|{patient.get('sex', 'U')}",
+            pid,
         ]
         return "\r".join(segments)
 
@@ -163,6 +166,7 @@ class EventBus:
     """Async event bus for internal service communication."""
 
     def __init__(self) -> None:
+        """Initialize the event bus."""
         self._subscribers: dict[str, list[Any]] = {}
         self._event_log: list[dict[str, Any]] = []
 
@@ -194,9 +198,7 @@ class EventBus:
             except Exception as e:
                 logger.error(f"Event handler failed for {event_type}: {e}")
 
-    def get_events(
-        self, event_type: str | None = None, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    def get_events(self, event_type: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         """Get recent events."""
         events = self._event_log
         if event_type:
@@ -208,6 +210,7 @@ class EHRConnector:
     """EHR system connector with FHIR/HL7 support."""
 
     def __init__(self, base_url: str, fhir_converter: FHIRConverter) -> None:
+        """Initialize the EHR connector."""
         self.base_url = base_url
         self.fhir = fhir_converter
         self._connected = False
@@ -225,12 +228,12 @@ class EHRConnector:
 
     def push_observation(self, observation: dict[str, Any]) -> bool:
         """Push observation to EHR via FHIR."""
-        fhir_obs = self.fhir.observation_to_fhir(observation)
+        self.fhir.observation_to_fhir(observation)
         # Production: HTTP POST to FHIR endpoint
         return True
 
     def push_medication(self, medication: dict[str, Any]) -> bool:
         """Push medication to EHR via FHIR."""
-        fhir_med = self.fhir.medication_to_fhir(medication)
+        self.fhir.medication_to_fhir(medication)
         # Production: HTTP POST to FHIR endpoint
         return True

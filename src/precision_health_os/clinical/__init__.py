@@ -159,7 +159,6 @@ class CDSSEngine:
     ) -> bool:
         """Evaluate a rule condition string using safe AST evaluation."""
         import ast
-        import operator
 
         namespace = {
             "patient": patient,
@@ -207,7 +206,9 @@ class CDSSEngine:
         if isinstance(node, ast.Name):
             return namespace.get(node.id, False)
         if isinstance(node, ast.BinOp):
-            return ops[type(node.op)](self._safe_eval_node(node.left, namespace), self._safe_eval_node(node.right, namespace))
+            left = self._safe_eval_node(node.left, namespace)
+            right = self._safe_eval_node(node.right, namespace)
+            return ops[type(node.op)](left, right)
         if isinstance(node, ast.UnaryOp):
             return ops[type(node.op)](self._safe_eval_node(node.operand, namespace))
         if isinstance(node, ast.BoolOp):
@@ -321,6 +322,7 @@ class ClinicalPathwayOptimizer:
             return True
         try:
             import ast
+
             tree = ast.parse(condition, mode="eval")
             # Reuse the safe evaluator from CDSSEngine
             engine = CDSSEngine()

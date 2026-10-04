@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import itertools
 import logging
-import random
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -51,6 +50,7 @@ class VRPTimeWindowsSolver:
     """
 
     def __init__(self, depot: Location, vehicle_capacity: float = 100.0) -> None:
+        """Initialize the VRPTW solver."""
         self.depot = depot
         self.vehicle_capacity = vehicle_capacity
 
@@ -84,7 +84,7 @@ class VRPTimeWindowsSolver:
         routes: list[list[Location]] = [[loc] for loc in locations]
         route_of = list(range(n))
 
-        for saving, i, j in savings:
+        for _saving, i, j in savings:
             ri, rj = route_of[i], route_of[j]
             if ri == rj:
                 continue
@@ -93,9 +93,7 @@ class VRPTimeWindowsSolver:
             route_j = routes[rj]
 
             # Check capacity
-            total_demand = sum(loc.demand for loc in route_i) + sum(
-                loc.demand for loc in route_j
-            )
+            total_demand = sum(loc.demand for loc in route_i) + sum(loc.demand for loc in route_j)
             if total_demand > self.vehicle_capacity:
                 continue
 
@@ -170,6 +168,7 @@ class TSPSolver:
     """
 
     def __init__(self) -> None:
+        """Initialize the solver."""
         pass
 
     def solve(self, locations: list[Location]) -> Route:
@@ -245,6 +244,7 @@ class KnapsackSolver:
     """
 
     def __init__(self, capacity: float) -> None:
+        """Initialize the knapsack solver."""
         self.capacity = capacity
 
     def solve(
@@ -257,26 +257,25 @@ class KnapsackSolver:
 
         # Scale weights to integers for DP
         scale = 100
-        W = int(self.capacity * scale)
+        w = int(self.capacity * scale)
         weights = [int(item[weight_key] * scale) for item in items]
         values = [item[value_key] for item in items]
 
         # DP table
-        dp: list[list[float]] = [[0.0] * (W + 1) for _ in range(n + 1)]
+        dp: list[list[float]] = [[0.0] * (w + 1) for _ in range(n + 1)]
 
         for i in range(1, n + 1):
-            for w in range(W + 1):
-                if weights[i - 1] <= w:
-                    dp[i][w] = max(
-                        dp[i - 1][w],
-                        dp[i - 1][w - weights[i - 1]] + values[i - 1],
+            for cap in range(w + 1):
+                if weights[i - 1] <= cap:
+                    dp[i][cap] = max(
+                        dp[i - 1][cap],
+                        dp[i - 1][cap - weights[i - 1]] + values[i - 1],
                     )
                 else:
-                    dp[i][w] = dp[i - 1][w]
+                    dp[i][cap] = dp[i - 1][cap]
 
         # Backtrack to find selected items
         selected: list[dict[str, Any]] = []
-        w = W
         for i in range(n, 0, -1):
             if dp[i][w] != dp[i - 1][w]:
                 selected.append(items[i - 1])
@@ -293,6 +292,7 @@ class BipartiteMatchingSolver:
     """
 
     def __init__(self) -> None:
+        """Initialize the solver."""
         pass
 
     def solve(

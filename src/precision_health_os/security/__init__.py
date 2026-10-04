@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 import hashlib
-import hmac
 import json
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+if TYPE_CHECKING:
+    from datetime import datetime
+
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from precision_health_os.models import AuditEvent
@@ -25,6 +23,7 @@ class EncryptionService:
     """AES-256-GCM encryption for PHI/PII data."""
 
     def __init__(self, master_key: bytes) -> None:
+        """Initialize with a 32-byte master key."""
         if len(master_key) != 32:
             raise ValueError("Master key must be 32 bytes for AES-256")
         self._master_key = master_key
@@ -56,6 +55,7 @@ class KeyRotationService:
     """Manage encryption key rotation."""
 
     def __init__(self) -> None:
+        """Initialize the key rotation service."""
         self._keys: dict[str, tuple[bytes, datetime]] = {}
         self._current_key_id: str | None = None
 
@@ -88,6 +88,7 @@ class AuditTrail:
     """HIPAA-compliant immutable audit trail."""
 
     def __init__(self) -> None:
+        """Initialize the audit trail."""
         self._events: list[AuditEvent] = []
         self._chain_hash: str = "0" * 64
 
@@ -116,9 +117,7 @@ class AuditTrail:
             details=details or {},
         )
         event_data = f"{event.id}:{event.timestamp.isoformat()}:{user_id}:{action}:{resource_id}"
-        self._chain_hash = hashlib.sha256(
-            f"{self._chain_hash}:{event_data}".encode()
-        ).hexdigest()
+        self._chain_hash = hashlib.sha256(f"{self._chain_hash}:{event_data}".encode()).hexdigest()
         self._events.append(event)
         logger.info(f"Audit: {action} on {resource_type}/{resource_id} by {user_id}")
         return event
@@ -127,10 +126,11 @@ class AuditTrail:
         """Verify the integrity of the audit chain."""
         chain_hash = "0" * 64
         for event in self._events:
-            event_data = f"{event.id}:{event.timestamp.isoformat()}:{event.user_id}:{event.action}:{event.resource_id}"
-            chain_hash = hashlib.sha256(
-                f"{chain_hash}:{event_data}".encode()
-            ).hexdigest()
+            event_data = (
+                f"{event.id}:{event.timestamp.isoformat()}"
+                f":{event.user_id}:{event.action}:{event.resource_id}"
+            )
+            chain_hash = hashlib.sha256(f"{chain_hash}:{event_data}".encode()).hexdigest()
         return chain_hash == self._chain_hash
 
     def get_events(
@@ -156,7 +156,7 @@ class AuditTrail:
 class RBACService:
     """Role-based access control for healthcare."""
 
-    ROLE_PERMISSIONS: dict[str, set[str]] = {
+    ROLE_PERMISSIONS: ClassVar[dict[str, set[str]]] = {
         "admin": {"read", "write", "delete", "admin", "audit"},
         "physician": {"read", "write", "prescribe", "order"},
         "nurse": {"read", "write", "administer"},
@@ -165,6 +165,7 @@ class RBACService:
     }
 
     def __init__(self) -> None:
+        """Initialize the RBAC service."""
         self._user_roles: dict[str, set[str]] = {}
 
     def assign_role(self, user_id: str, role: str) -> None:
@@ -176,10 +177,7 @@ class RBACService:
     def has_permission(self, user_id: str, permission: str) -> bool:
         """Check if a user has a specific permission."""
         roles = self._user_roles.get(user_id, set())
-        for role in roles:
-            if permission in self.ROLE_PERMISSIONS.get(role, set()):
-                return True
-        return False
+        return any(permission in self.ROLE_PERMISSIONS.get(role, set()) for role in roles)
 
     def get_user_permissions(self, user_id: str) -> set[str]:
         """Get all permissions for a user."""
@@ -193,10 +191,24 @@ class RBACService:
 class HIPAACompliance:
     """HIPAA Safe Harbor de-identification."""
 
-    SAFE_HARBOR_FIELDS = {
-        "name", "address", "dates", "telephone", "fax", "email",
-        "ssn", "mrn", "health_plan", "account", "certificate",
-        "vehicle", "device", "url", "ip", "biometric", "photo",
+    SAFE_HARBOR_FIELDS: ClassVar[set[str]] = {
+        "name",
+        "address",
+        "dates",
+        "telephone",
+        "fax",
+        "email",
+        "ssn",
+        "mrn",
+        "health_plan",
+        "account",
+        "certificate",
+        "vehicle",
+        "device",
+        "url",
+        "ip",
+        "biometric",
+        "photo",
         "unique_id",
     }
 
@@ -204,14 +216,10 @@ class HIPAACompliance:
     def deidentify(data: dict[str, Any]) -> dict[str, Any]:
         """Remove HIPAA Safe Harbor identifiers."""
         return {
-            k: v for k, v in data.items()
-            if k.lower() not in HIPAACompliance.SAFE_HARBOR_FIELDS
+            k: v for k, v in data.items() if k.lower() not in HIPAACompliance.SAFE_HARBOR_FIELDS
         }
 
     @staticmethod
     def is_deidentified(data: dict[str, Any]) -> bool:
         """Check if data has been de-identified."""
-        return not any(
-            k.lower() in HIPAACompliance.SAFE_HARBOR_FIELDS
-            for k in data
-        )
+        return not any(k.lower() in HIPAACompliance.SAFE_HARBOR_FIELDS for k in data)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -22,15 +22,15 @@ class Patient(BaseModel):
     allergies: list[str] = Field(default_factory=list)
     medications: list[str] = Field(default_factory=list)
     conditions: list[str] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class VitalSigns(BaseModel):
     """Real-time vital signs from wearables or IoMT devices."""
 
     patient_id: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     heart_rate_bpm: float | None = Field(None, ge=0, le=300)
     blood_pressure_systolic: float | None = Field(None, ge=0, le=300)
     blood_pressure_diastolic: float | None = Field(None, ge=0, le=200)
@@ -62,7 +62,7 @@ class ClinicalAlert(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0)
     recommendations: list[str] = Field(default_factory=list)
     acknowledged: bool = False
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class GenomicVariant(BaseModel):
@@ -116,7 +116,7 @@ class AuditEvent(BaseModel):
     """HIPAA-compliant audit event."""
 
     id: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     user_id: str
     action: str
     resource_type: str

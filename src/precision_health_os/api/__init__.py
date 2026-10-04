@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from precision_health_os.clinical import CDSSEngine
 from precision_health_os.integration import EventBus
 from precision_health_os.iot import AnomalyDetector, WearableDataPipeline
-from precision_health_os.models import AlertSeverity, ClinicalAlert, Patient, VitalSigns
 from precision_health_os.security import AuditTrail, RBACService
+
+if TYPE_CHECKING:
+    from precision_health_os.models import AlertSeverity, ClinicalAlert, Patient, VitalSigns
 
 logger = logging.getLogger(__name__)
 

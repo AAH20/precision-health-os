@@ -26,7 +26,6 @@ def generate_token(length: int = 32) -> str:
 
 def utcnow() -> datetime:
     """Get current UTC datetime (timezone-aware)."""
-    from datetime import timezone
     return datetime.now(UTC)
 
 

@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from precision_health_os.models import DrugResponsePrediction, Patient
-from precision_health_os.utils import normalize
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +29,14 @@ class DiseasePredictor:
     """
 
     def __init__(self) -> None:
+        """Initialize the disease predictor."""
         self._models: dict[str, Any] = {}
         self._feature_importance: dict[str, dict[str, float]] = {}
 
-    def predict_cardiovascular_risk(self, patient: Patient, vitals: dict[str, float]) -> DiseaseRisk:
+    def predict_cardiovascular_risk(
+        self, patient: Patient, vitals: dict[str, float]
+    ) -> DiseaseRisk:
         """Predict cardiovascular disease risk (simplified Framingham-like)."""
-        age = 50  # Would compute from DOB
         contributing: dict[str, float] = {}
 
         # Simplified risk factors
@@ -111,6 +112,7 @@ class DrugResponseModel:
     """Drug response prediction using pharmacogenomic and clinical features."""
 
     def __init__(self) -> None:
+        """Initialize the drug response model."""
         self._biomarker_weights: dict[str, dict[str, float]] = {
             "HER2": {"trastuzumab": 0.8},
             "EGFR": {"gefitinib": 0.7, "erlotinib": 0.7},
@@ -136,7 +138,7 @@ class DrugResponseModel:
                 weight = self._biomarker_weights[biomarker].get(drug, 0)
                 if weight != 0:
                     has_matching_biomarker = True
-                if isinstance(value, (int, float)):
+                if isinstance(value, int | float):
                     score += weight * value
                     evidence.append(f"{biomarker}={value} (weight: {weight})")
                 elif isinstance(value, str) and value.lower() in ("positive", "high", "mutated"):
@@ -186,6 +188,7 @@ class MedicalImageAnalyzer:
     """
 
     def __init__(self) -> None:
+        """Initialize the image analyzer."""
         self._models: dict[str, Any] = {}
 
     def analyze_chest_xray(self, image_data: bytes) -> dict[str, Any]:

@@ -76,12 +76,22 @@ class TestADMETPredictor:
 
     def test_drug_likeness_score(self) -> None:
         good = Molecule(
-            smiles="CCO", name="good", molecular_weight=300, logp=2.0,
-            hbd=2, hba=5, tpsa=60,
+            smiles="CCO",
+            name="good",
+            molecular_weight=300,
+            logp=2.0,
+            hbd=2,
+            hba=5,
+            tpsa=60,
         )
         bad = Molecule(
-            smiles="CCCC", name="bad", molecular_weight=800, logp=8.0,
-            hbd=10, hba=20, tpsa=200,
+            smiles="CCCC",
+            name="bad",
+            molecular_weight=800,
+            logp=8.0,
+            hbd=10,
+            hba=20,
+            tpsa=200,
         )
         assert self.predictor.drug_likeness_score(good) > self.predictor.drug_likeness_score(bad)
 

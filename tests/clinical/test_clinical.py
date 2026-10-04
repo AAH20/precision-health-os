@@ -1,5 +1,6 @@
 """Tests for clinical module."""
 
+import pytest
 
 from precision_health_os.clinical import (
     AlertManager,
@@ -184,8 +185,5 @@ class TestClinicalPathwayOptimizer:
 
     def test_unknown_pathway(self) -> None:
         optimizer = ClinicalPathwayOptimizer()
-        try:
+        with pytest.raises(ValueError):
             optimizer.optimize("unknown", {})
-            assert False, "Should raise ValueError"
-        except ValueError:
-            pass

@@ -26,7 +26,13 @@ class TestDiseasePredictor:
         assert result.risk_score < 0.3
 
     def test_cardiovascular_risk_high(self) -> None:
-        vitals = {"systolic_bp": 160, "total_cholesterol": 260, "hdl": 35, "glucose": 140, "bmi": 32}
+        vitals = {
+            "systolic_bp": 160,
+            "total_cholesterol": 260,
+            "hdl": 35,
+            "glucose": 140,
+            "bmi": 32,
+        }
         result = self.predictor.predict_cardiovascular_risk(self.patient, vitals)
         assert result.risk_score > 0.3
         assert len(result.contributing_factors) > 0

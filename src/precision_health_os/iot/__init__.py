@@ -41,6 +41,7 @@ class WearableDataPipeline:
     """Real-time wearable data ingestion and processing pipeline."""
 
     def __init__(self, window_size: int = 100) -> None:
+        """Initialize the wearable data pipeline."""
         self.window_size = window_size
         self._buffers: dict[str, deque[SensorReading]] = {}
         self._processors: list[Any] = []
@@ -91,6 +92,7 @@ class AnomalyDetector:
     """Multi-method anomaly detection for wearable data."""
 
     def __init__(self, z_threshold: float = 3.0, iqr_multiplier: float = 1.5) -> None:
+        """Initialize the anomaly detector."""
         self.z_threshold = z_threshold
         self.iqr_multiplier = iqr_multiplier
 
@@ -130,7 +132,9 @@ class AnomalyDetector:
         results = []
         for v in values:
             is_anom = v < lower or v > upper
-            score = max(0, (v - upper) / iqr if v > upper else (lower - v) / iqr if v < lower else 0)
+            score = max(
+                0, (v - upper) / iqr if v > upper else (lower - v) / iqr if v < lower else 0
+            )
             results.append(
                 AnomalyResult(
                     is_anomaly=is_anom,
@@ -200,6 +204,7 @@ class RemotePatientMonitor:
     """Remote patient monitoring with alerting."""
 
     def __init__(self, pipeline: WearableDataPipeline, detector: AnomalyDetector) -> None:
+        """Initialize the remote patient monitor."""
         self.pipeline = pipeline
         self.detector = detector
         self._alert_handlers: list[Any] = []

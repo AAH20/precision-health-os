@@ -120,56 +120,70 @@ class PharmacogenomicScorer:
     CPIC_GUIDELINES: ClassVar[dict[str, list[PharmacogenomicGuideline]]] = {
         "CYP2D6": [
             PharmacogenomicGuideline(
-                "CYP2D6", "*1/*1", "extensive_metabolizer", "codeine",
-                "Standard dosing", "1A"
+                "CYP2D6", "*1/*1", "extensive_metabolizer", "codeine", "Standard dosing", "1A"
             ),
             PharmacogenomicGuideline(
-                "CYP2D6", "*4/*4", "poor_metabolizer", "codeine",
-                "Avoid codeine — use alternative analgesic", "1A"
+                "CYP2D6",
+                "*4/*4",
+                "poor_metabolizer",
+                "codeine",
+                "Avoid codeine — use alternative analgesic",
+                "1A",
             ),
             PharmacogenomicGuideline(
-                "CYP2D6", "*1xN/*1", "ultrarapid_metabolizer", "codeine",
-                "Avoid codeine — risk of toxicity", "1A"
+                "CYP2D6",
+                "*1xN/*1",
+                "ultrarapid_metabolizer",
+                "codeine",
+                "Avoid codeine — risk of toxicity",
+                "1A",
             ),
         ],
         "CYP2C19": [
             PharmacogenomicGuideline(
-                "CYP2C19", "*1/*1", "extensive_metabolizer", "clopidogrel",
-                "Standard dosing", "1A"
+                "CYP2C19", "*1/*1", "extensive_metabolizer", "clopidogrel", "Standard dosing", "1A"
             ),
             PharmacogenomicGuideline(
-                "CYP2C19", "*2/*2", "poor_metabolizer", "clopidogrel",
-                "Consider prasugrel or ticagrelor", "1A"
+                "CYP2C19",
+                "*2/*2",
+                "poor_metabolizer",
+                "clopidogrel",
+                "Consider prasugrel or ticagrelor",
+                "1A",
             ),
         ],
         "CYP2C9": [
             PharmacogenomicGuideline(
-                "CYP2C9", "*1/*1", "extensive_metabolizer", "warfarin",
-                "Standard dosing", "1A"
+                "CYP2C9", "*1/*1", "extensive_metabolizer", "warfarin", "Standard dosing", "1A"
             ),
             PharmacogenomicGuideline(
-                "CYP2C9", "*3/*3", "poor_metabolizer", "warfarin",
-                "Reduce dose by 50-70%", "1A"
+                "CYP2C9", "*3/*3", "poor_metabolizer", "warfarin", "Reduce dose by 50-70%", "1A"
             ),
         ],
         "TPMT": [
             PharmacogenomicGuideline(
-                "TPMT", "*1/*1", "normal_metabolizer", "azathioprine",
-                "Standard dosing", "1A"
+                "TPMT", "*1/*1", "normal_metabolizer", "azathioprine", "Standard dosing", "1A"
             ),
             PharmacogenomicGuideline(
-                "TPMT", "*2/*2", "poor_metabolizer", "azathioprine",
-                "Avoid or reduce dose by 90%", "1A"
+                "TPMT",
+                "*2/*2",
+                "poor_metabolizer",
+                "azathioprine",
+                "Avoid or reduce dose by 90%",
+                "1A",
             ),
         ],
         "SLCO1B1": [
             PharmacogenomicGuideline(
-                "SLCO1B1", "*1/*1", "normal_function", "simvastatin",
-                "Standard dosing", "1A"
+                "SLCO1B1", "*1/*1", "normal_function", "simvastatin", "Standard dosing", "1A"
             ),
             PharmacogenomicGuideline(
-                "SLCO1B1", "*5/*5", "decreased_function", "simvastatin",
-                "Consider lower dose or alternative", "1A"
+                "SLCO1B1",
+                "*5/*5",
+                "decreased_function",
+                "simvastatin",
+                "Consider lower dose or alternative",
+                "1A",
             ),
         ],
     }
@@ -198,7 +212,8 @@ class PharmacogenomicScorer:
         """Calculate phenotype score from variants."""
         # Simplified scoring — production would use star allele calling
         pathogenic_count = sum(
-            1 for v in variants
+            1
+            for v in variants
             if v.gene == gene and v.clinical_significance in ("pathogenic", "likely_pathogenic")
         )
 
@@ -213,13 +228,12 @@ class RiskPredictor:
     """Polygenic risk score calculation."""
 
     def __init__(self) -> None:
+        """Initialize the risk predictor."""
         self._weights: dict[str, float] = {}
 
     def train(self, variants: list[GenomicVariant], phenotypes: list[int]) -> None:
         """Train risk weights from variant-phenotype associations."""
         # Simplified: count variant frequencies in cases vs controls
-        case_count = sum(phenotypes)
-        control_count = len(phenotypes) - case_count
 
         for variant in variants:
             key = f"{variant.chrom}:{variant.pos}:{variant.alt}"

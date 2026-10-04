@@ -16,20 +16,15 @@ class TestVariantCaller:
 
     def test_no_variants(self) -> None:
         reads = [
-            {"chrom": "1", "pos": 100, "ref": "A", "base": "A", "quality": 40}
-            for _ in range(10)
+            {"chrom": "1", "pos": 100, "ref": "A", "base": "A", "quality": 40} for _ in range(10)
         ]
         calls = self.caller.call_variants(reads)
         assert len(calls) == 0
 
     def test_snp_call(self) -> None:
         reads = [
-            {"chrom": "1", "pos": 100, "ref": "A", "base": "A", "quality": 40}
-            for _ in range(5)
-        ] + [
-            {"chrom": "1", "pos": 100, "ref": "A", "base": "G", "quality": 40}
-            for _ in range(5)
-        ]
+            {"chrom": "1", "pos": 100, "ref": "A", "base": "A", "quality": 40} for _ in range(5)
+        ] + [{"chrom": "1", "pos": 100, "ref": "A", "base": "G", "quality": 40} for _ in range(5)]
         calls = self.caller.call_variants(reads)
         assert len(calls) == 1
         assert calls[0].alt == "G"
@@ -37,8 +32,7 @@ class TestVariantCaller:
 
     def test_homozygous_alt(self) -> None:
         reads = [
-            {"chrom": "1", "pos": 100, "ref": "A", "base": "G", "quality": 40}
-            for _ in range(10)
+            {"chrom": "1", "pos": 100, "ref": "A", "base": "G", "quality": 40} for _ in range(10)
         ]
         calls = self.caller.call_variants(reads)
         assert len(calls) == 1
@@ -46,16 +40,14 @@ class TestVariantCaller:
 
     def test_low_quality_filtered(self) -> None:
         reads = [
-            {"chrom": "1", "pos": 100, "ref": "A", "base": "G", "quality": 10}
-            for _ in range(10)
+            {"chrom": "1", "pos": 100, "ref": "A", "base": "G", "quality": 10} for _ in range(10)
         ]
         calls = self.caller.call_variants(reads)
         assert len(calls) == 0
 
     def test_low_depth_filtered(self) -> None:
         reads = [
-            {"chrom": "1", "pos": 100, "ref": "A", "base": "G", "quality": 40}
-            for _ in range(3)
+            {"chrom": "1", "pos": 100, "ref": "A", "base": "G", "quality": 40} for _ in range(3)
         ]
         calls = self.caller.call_variants(reads)
         assert len(calls) == 0
@@ -85,12 +77,20 @@ class TestPharmacogenomicScorer:
     def test_calculate_phenotype_score(self) -> None:
         variants = [
             GenomicVariant(
-                chrom="1", pos=100, ref="A", alt="G",
-                gene="CYP2D6", clinical_significance="pathogenic",
+                chrom="1",
+                pos=100,
+                ref="A",
+                alt="G",
+                gene="CYP2D6",
+                clinical_significance="pathogenic",
             ),
             GenomicVariant(
-                chrom="1", pos=200, ref="C", alt="T",
-                gene="CYP2D6", clinical_significance="pathogenic",
+                chrom="1",
+                pos=200,
+                ref="C",
+                alt="T",
+                gene="CYP2D6",
+                clinical_significance="pathogenic",
             ),
         ]
         score = self.scorer.calculate_phenotype_score("CYP2D6", variants)

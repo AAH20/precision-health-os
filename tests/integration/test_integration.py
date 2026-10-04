@@ -87,7 +87,7 @@ class TestHL7v2Parser:
         }
         message = self.parser.create_adt(patient)
         assert "MSH|" in message
-        "PID|" in message
+        assert "PID|" in message
 
 
 class TestEventBus:
@@ -105,7 +105,10 @@ class TestEventBus:
 
     def test_unsubscribe(self) -> None:
         received = []
-        handler = lambda e: received.append(e)
+
+        def handler(e: dict) -> None:
+            received.append(e)
+
         self.bus.subscribe("test.event", handler)
         self.bus.unsubscribe("test.event", handler)
         self.bus.publish("test.event", {})
