@@ -137,6 +137,6 @@ class TestKnapsackScalability:
         solver = KnapsackSolver(capacity=1000)
         tracemalloc.start()
         solver.solve(items)
-        current, peak = tracemalloc.get_traced_memory()
+        _current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         assert peak < 200 * 1024 * 1024
