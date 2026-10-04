@@ -5,7 +5,7 @@
 [![CI](https://github.com/AAH20/precision-health-os/actions/workflows/ci.yml/badge.svg)](https://github.com/AAH20/precision-health-os/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-160%20passing-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-516%20passing-brightgreen.svg)](#testing)
 [![Ruff](https://img.shields.io/badge/lint-ruff%20clean-brightgreen.svg)](https://github.com/astral-sh/ruff)
 [![Bandit](https://img.shields.io/badge/security-bandit%20clean-brightgreen.svg)](https://bandit.readthedocs.io/)
 
@@ -501,7 +501,7 @@ flowchart TD
 | Problem | Complexity | Implementation | Notes |
 |---------|-----------|----------------|-------|
 | **Patient Scheduling (VRPTW)** | O(n²·2ⁿ) exact | Clarke-Wright savings heuristic | Respects vehicle capacity + time windows |
-| **Treatment Planning (TSP)** | O(n!) exact | Nearest-neighbor + 2-opt local search | Iterative improvement to near-optimal |
+| **Treatment Planning (TSP)** | O(n!) exact | Nearest-neighbor + O(1)-delta 2-opt | 1.1% mean gap vs optimal, 0% regressions vs NN |
 | **Drug Combination (Knapsack)** | O(n·W) pseudo-poly | Dynamic programming with backtracking | Integer-scaled weights for precision |
 | **Clinical Trial Matching (Bipartite)** | O(V·E) | Greedy maximum matching with scores | Hard filters on age + condition eligibility |
 | **Genome Assembly** | NP-hard | Approximation heuristics | Shortest-superstring based |
@@ -729,28 +729,33 @@ Full sizing guidance: [`docs/onboarding.md`](docs/onboarding.md)
 ## Testing
 
 ```bash
-pytest                                    # Full suite (160 tests)
+pytest                                    # Full suite (516 tests)
 pytest --cov=src/precision_health_os      # With coverage
 pytest -n auto                            # Parallel execution
 pytest -m "not slow"                      # Skip slow tests
 ```
 
-### Test Coverage by Module
+### Coverage by Module
 
-| Module | Tests | Focus |
-|--------|:-----:|-------|
-| `utils` | 20 | Hashing, merging, normalization, z-scores |
-| `security` | 17 | Encryption, key rotation, audit chain, RBAC, HIPAA |
-| `models` | 16 | Pydantic validation, range checks, enums |
-| `optimization` | 15 | VRP, TSP, knapsack, bipartite matching |
-| `iot` | 23 | Pipeline, z-score/IQR/EWMA/ensemble detection |
-| `clinical` | 13 | CDSS rules, alert dedup, pathway optimization |
-| `genomics` | 19 | Variant calling, genotype-aware CPIC scoring, risk prediction |
-| `integration` | 11 | FHIR conversion, HL7 parsing, event bus |
-| `ml` | 10 | Disease risk, drug response, image analysis |
-| `drug_discovery` | 8 | Docking, ADMET, trial matching |
-| `api` | 7 | Patient registration, alert flow, permissions |
-| | **160** | |
+Coverage gate: **95%** (`fail_under`). Current: **98.57%** across 516 tests.
+
+| Module | Coverage | Focus |
+|--------|:--------:|-------|
+| `models` | 100% | Pydantic validation, range checks, enums |
+| `security` | 100% | Encryption, key rotation, audit chain, RBAC, HIPAA |
+| `utils` | 100% | Hashing, merging, normalization, z-scores |
+| `api` | 100% | Patient registration, alert flow, permissions |
+| `genomics` | 100% | Variant calling, genotype-aware CPIC scoring, PRS |
+| `integration` | 100% | FHIR conversion, HL7 parsing, event bus |
+| `drug_discovery` | 100% | Docking, ADMET, trial matching |
+| `iot` | 99% | Pipeline, z-score/IQR/EWMA/ensemble detection |
+| `ml` | 99% | Disease risk, drug response, image analysis |
+| `clinical` | 99% | CDSS rules, safe AST evaluator, alert dedup |
+| `optimization` | 98% | VRP, TSP, knapsack, bipartite matching |
+| `evaluation` | 98% | Benchmark harness, evolution tracking |
+| `cli` | 97% | Typer commands, alert display |
+| `benchmarks` | 93% | The 7 concrete solver benchmarks |
+| **Total** | **98.57%** | **516 tests** |
 
 ---
 
@@ -786,16 +791,80 @@ precision-health-os/
 │   ├── security/           # HIPAA, encryption, audit, RBAC
 │   ├── utils/              # Shared helpers
 │   └── cli.py              # Typer CLI
-├── tests/                  # 160 tests, mirrors src/
+├── tests/                  # 516 tests, mirrors src/
 ├── research/               # 10 cluster JSONs + consolidated
 ├── architecture/           # 7 Mermaid diagram files
-├── docs/                   # Onboarding & sizing
+├── web/                    # Standalone dashboards (no build step)
+├── docs/                   # Onboarding, sizing, evaluation, UI contract
 ├── examples/               # Runnable examples
 ├── Dockerfile              # Multi-stage (base/dev/prod)
 ├── docker-compose.yml      # app + postgres + redis + worker
 ├── Makefile                # install/test/lint/security targets
 └── pyproject.toml          # Dependencies, ruff, pytest, mypy config
 ```
+
+---
+
+## Evaluation & Evolution
+
+The platform scores itself against explicit thresholds rather than subjective judgement.
+
+```bash
+python -m precision_health_os.benchmarks   # exits 0 when all 7 pass
+```
+
+| Benchmark | Measures | Threshold | Result |
+|-----------|----------|-----------|--------|
+| `tsp_quality` | 2-opt never worse than NN; optimality gap | 1.0 / 0.80 | **1.00 / 0.97** |
+| `knapsack_optimality` | DP matches brute-force optimum | 1.0 | **1.00** |
+| `vrp_feasibility` | All nodes served; capacity respected | 1.0 / 1.0 | **1.00 / 1.00** |
+| `bipartite_correctness` | No ineligible patient-trial pairs | 1.0 / 1.0 | **1.00 / 1.00** |
+| `anomaly_detection` | Spike recall; specificity on noise | 1.0 / 0.95 | **1.00 / 0.95** |
+| `solver_latency` | TSP and VRP wall-clock | ≤2000ms | **1.3ms / 2.1ms** |
+| `evaluation_framework` | Harness primitives correct | 1.0 | **1.00** |
+
+**7/7 passing · pass_rate 100% · mean_score 1.000**
+
+`EvolutionTracker` records a metric across generations and detects regression, so improvement is a measured trend rather than a claim:
+
+```python
+from precision_health_os.evaluation import EvolutionTracker
+
+t = EvolutionTracker(metric="coverage")
+for gen, value in enumerate([84.0, 89.0, 98.57], start=1):
+    t.record(gen, value)
+
+t.is_improving()      # True
+t.improvement()       # 14.64
+t.best_generation()   # 3
+t.regressed()         # False
+```
+
+The **quality ratchet** locks this in: the coverage gate is 95% against a current 98.57%, so a genuine regression fails CI.
+
+See [docs/evaluation.md](docs/evaluation.md) for the framework reference.
+
+---
+
+## Dashboards
+
+Two self-contained HTML pages, no build step and no server required — open them
+directly in a browser.
+
+| File | Shows |
+|------|-------|
+| [`web/dashboard.html`](web/dashboard.html) | System status, active alerts by severity, the 10 modules, solver stats |
+| [`web/benchmarks.html`](web/benchmarks.html) | The 7 benchmarks, measured vs required, with pass margins |
+
+Both follow the project's UI contract (see [docs/ui.md](docs/ui.md)):
+
+- **Zero-overlay layout** — CSS grid and flexbox only; no absolute positioning, no floats
+- **Mobile-first** — fluid `clamp()` typography, no horizontal scroll from 320px up
+- **Semantic + accessible** — `<header>/<nav>/<main>/<section>/<article>/<footer>`, ARIA labels, WCAG AA contrast, keyboard-reachable controls
+- **Motion-safe** — `prefers-reduced-motion` fallback; only `transform`/`opacity` animate
+
+Live state is produced by `precision_health_os.dashboard.build_dashboard_state()`,
+which converts platform objects into JSON-serializable dicts.
 
 ---
 

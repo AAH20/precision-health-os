@@ -57,7 +57,20 @@ class PrecisionHealthAPI:
         return self._alert_manager.get_active_alerts(patient_id, severity)
 
     def acknowledge_alert(self, alert_id: str, user_id: str) -> bool:
-        """Acknowledge an alert."""
+        """Acknowledge an alert and clear it from the active set.
+
+        Returns True when the alert exists and is acknowledged, so repeat calls
+        are idempotent rather than reporting failure for a completed action.
+        The audit event is recorded only on the transition, so re-acknowledging
+        does not fabricate a second clinical action in the trail.
+        """
+        alert = self._alert_manager.acknowledge(alert_id, user_id)
+        if alert is None:
+            return False
+        if not alert.acknowledged:
+            # AlertManager only flips the flag on the first call; if it is
+            # still unset the alert could not be acknowledged.
+            return False
         self.audit.log(user_id, "acknowledge_alert", "alert", alert_id)
         return True
 

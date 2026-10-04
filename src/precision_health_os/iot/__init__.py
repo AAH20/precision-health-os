@@ -118,7 +118,16 @@ class AnomalyDetector:
         return results
 
     def detect_iqr(self, values: list[float]) -> list[AnomalyResult]:
-        """IQR-based anomaly detection."""
+        """IQR-based anomaly detection.
+
+        When the interquartile range is zero (a flat baseline, optionally with
+        outliers) the fences collapse onto the median, so any deviation is
+        infinitely far outside them. Dividing by that zero range would raise
+        ``ZeroDivisionError`` and take the whole monitoring pipeline down, so
+        a degenerate range is handled explicitly: values off the median are
+        anomalies, and their score is derived from the deviation rather than
+        from a division by zero.
+        """
         if len(values) < 4:
             return [AnomalyResult(False, 0.0, "iqr") for _ in values]
 
@@ -128,6 +137,28 @@ class AnomalyDetector:
         iqr = q3 - q1
         lower = q1 - self.iqr_multiplier * iqr
         upper = q3 + self.iqr_multiplier * iqr
+
+        if iqr == 0:
+            # Degenerate spread: the median is the only "normal" value.
+            median = sorted_vals[len(sorted_vals) // 2]
+            results = []
+            for v in values:
+                deviation = abs(v - median)
+                results.append(
+                    AnomalyResult(
+                        is_anomaly=deviation > 0,
+                        score=deviation,
+                        method="iqr",
+                        details={
+                            "q1": q1,
+                            "q3": q3,
+                            "iqr": 0.0,
+                            "median": median,
+                            "degenerate_range": True,
+                        },
+                    )
+                )
+            return results
 
         results = []
         for v in values:
@@ -146,7 +177,11 @@ class AnomalyDetector:
         return results
 
     def detect_ewma(
-        self, values: list[float], alpha: float = 0.3, threshold: float = 3.0
+        self,
+        values: list[float],
+        alpha: float = 0.3,
+        threshold: float = 3.0,
+        warmup: int = 3,
     ) -> list[AnomalyResult]:
         """Exponentially Weighted Moving Average anomaly detection.
 
@@ -154,6 +189,12 @@ class AnomalyDetector:
         *prior* observations only. Updating the variance with the current
         point's own deviation would let a large spike inflate its own
         denominator and escape detection.
+
+        The first ``warmup`` observations abstain: with only one or two prior
+        points the variance estimate is unstable, so a normal reading can
+        score many sigma against it and produce a false alert. Abstentions
+        are reported via ``details["warmup"]`` so the ensemble can ignore
+        them rather than counting them as negative votes.
         """
         if len(values) < 3:
             return [AnomalyResult(False, 0.0, "ewma") for _ in values]
@@ -162,18 +203,23 @@ class AnomalyDetector:
         ewma_var = 0.0
         results = []
 
-        for v in values:
+        for idx, v in enumerate(values):
             # Score against the model fitted on prior points.
             ewma_std = ewma_var**0.5 if ewma_var > 0 else 0
             diff = v - ewma
             score = abs(diff) / ewma_std if ewma_std > 0 else 0
 
+            in_warmup = idx < warmup
             results.append(
                 AnomalyResult(
-                    is_anomaly=score > threshold,
+                    is_anomaly=(score > threshold) and not in_warmup,
                     score=score,
                     method="ewma",
-                    details={"ewma": ewma, "ewma_std": ewma_std},
+                    details={
+                        "ewma": ewma,
+                        "ewma_std": ewma_std,
+                        "warmup": in_warmup,
+                    },
                 )
             )
 
@@ -184,26 +230,42 @@ class AnomalyDetector:
         return results
 
     def detect_ensemble(self, values: list[float]) -> list[AnomalyResult]:
-        """Ensemble anomaly detection combining multiple methods."""
+        """Ensemble anomaly detection combining multiple methods.
+
+        Voting is a majority of the arms that actually voted. An arm in
+        EWMA warm-up abstains and is excluded from the denominator rather than
+        counted as a negative, so on short windows the verdict is decided by
+        the arms that can legitimately speak. A single dissenting vote never
+        raises an alert on its own — that is what keeps stationary noise from
+        generating false positives.
+        """
         z_results = self.detect_zscore(values)
         iqr_results = self.detect_iqr(values)
         ewma_results = self.detect_ewma(values)
 
         results = []
         for z, iqr, ewma in zip(z_results, iqr_results, ewma_results, strict=False):
-            # Voting: 2 out of 3 methods must agree
-            votes = sum([z.is_anomaly, iqr.is_anomaly, ewma.is_anomaly])
+            # A warm-up EWMA abstains; it is neither a positive nor a negative vote.
+            voting_arms = [z.is_anomaly, iqr.is_anomaly]
+            if not ewma.details.get("warmup", False):
+                voting_arms.append(ewma.is_anomaly)
+
+            votes = sum(1 for flagged in voting_arms if flagged)
+            voters = len(voting_arms)
+
             avg_score = (z.score + iqr.score + ewma.score) / 3
             results.append(
                 AnomalyResult(
-                    is_anomaly=votes >= 2,
+                    is_anomaly=votes * 2 > voters,
                     score=avg_score,
                     method="ensemble",
                     details={
                         "zscore": z.is_anomaly,
                         "iqr": iqr.is_anomaly,
                         "ewma": ewma.is_anomaly,
+                        "ewma_warmup": ewma.details.get("warmup", False),
                         "votes": votes,
+                        "voters": voters,
                     },
                 )
             )

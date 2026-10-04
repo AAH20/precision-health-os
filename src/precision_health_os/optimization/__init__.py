@@ -200,19 +200,42 @@ class TSPSolver:
         return self._build_route(route_locs)
 
     def _two_opt(self, route: list[int], locations: list[Location]) -> list[int]:
-        """2-opt local search improvement."""
+        """2-opt local search using the O(1) delta criterion.
+
+        The route is an **open path** (no return edge to the start), so
+        reversing ``route[i:j+1]`` only affects the two boundary edges
+        ``(i-1, i)`` and ``(j, j+1)`` — and when ``j`` is the final node there
+        is no ``(j, j+1)`` edge at all. Evaluating the change in constant time
+        lets the sweep complete for larger instances; distances are symmetric,
+        so internal edges contribute nothing to the delta.
+        """
+        n = len(route)
+        if n < 4:
+            return route
+
+        def dist(a: int, b: int) -> float:
+            return euclidean_distance(
+                [locations[a].x, locations[a].y], [locations[b].x, locations[b].y]
+            )
+
         improved = True
         while improved:
             improved = False
-            for i in range(1, len(route) - 2):
-                for j in range(i + 1, len(route)):
-                    if j - i == 1:
-                        continue
-                    new_route = route[:i] + route[i:j][::-1] + route[j:]
-                    if self._route_distance(new_route, locations) < self._route_distance(
-                        route, locations
-                    ):
-                        route = new_route
+            for i in range(1, n - 1):
+                for j in range(i + 1, n):
+                    a, b = route[i - 1], route[i]
+                    c = route[j]
+
+                    removed = dist(a, b)
+                    added = dist(a, c)
+
+                    if j + 1 < n:
+                        d = route[j + 1]
+                        removed += dist(c, d)
+                        added += dist(b, d)
+
+                    if added < removed - 1e-12:
+                        route[i : j + 1] = reversed(route[i : j + 1])
                         improved = True
         return route
 

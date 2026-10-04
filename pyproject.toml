@@ -122,7 +122,9 @@ select = [
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D102", "D103"]
+# Test files: docstrings on every test method add noise without signal, and
+# dict()/generator style preferences do not affect test correctness.
+"tests/*" = ["D102", "D103", "D104", "D101", "D205", "C408", "C401"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["precision_health_os"]
@@ -155,7 +157,10 @@ exclude_dirs = ["tests"]
 # B101: assert used for internal invariants outside tests.
 # B104: the CLI binds 0.0.0.0 by default; the app is containerised and the
 #       listen address is operator-controlled via --host.
-skips = ["B101", "B104"]
+# B311: benchmarks.py uses seeded `random` to generate reproducible solver
+#       instances for measurement. It is not a security context; all
+#       security-sensitive randomness uses os.urandom / secrets.
+skips = ["B101", "B104", "B311"]
 
 [tool.coverage.run]
 source = ["src/precision_health_os"]
@@ -163,4 +168,6 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 80
+# Ratchet: the suite currently sits at 99%. Keep the gate just below so a
+# genuine regression fails CI while normal churn does not.
+fail_under = 95

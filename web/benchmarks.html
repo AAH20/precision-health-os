@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Benchmark and evaluation results for Precision Health OS — seven benchmarks, twelve metrics, all passing their required thresholds.">
+  <title>Precision Health OS — Benchmark Results</title>
+  <style>
+    /* Theme tokens — :root block from the ui-ux-quality template, plus status/line tokens */
+    :root {
+      --color-primary: #00d4ff;
+      --color-secondary: #8b5cff;
+      --color-bg: #0d1b2e;
+      --color-card: #142236;
+      --color-text: #ffffff;
+      --color-muted: #b0b0b0;
+      --color-pass: #4ade80;
+      --color-pass-bg: rgba(74, 222, 128, 0.12);
+      --color-pass-border: rgba(74, 222, 128, 0.35);
+      --color-line: rgba(255, 255, 255, 0.08);
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    /* Reset + base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3 { line-height: 1.2; text-wrap: balance; }
+
+    /* Layout */
+    .container {
+      width: 100%;
+      max-width: 75rem;
+      margin-inline: auto;
+      padding-inline: clamp(0.625rem, 3vw, 1.5rem);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    /* Header */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(13, 27, 46, 0.92);
+      border-bottom: 1px solid var(--color-line);
+      padding-block: 0.875rem;
+    }
+
+    .header-inner { display: flex; flex-direction: column; gap: 0.25rem; }
+
+    .eyebrow {
+      color: var(--color-primary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .site-header h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
+
+    .lede {
+      color: var(--color-muted);
+      font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+      max-width: 65ch;
+    }
+
+    /* Sections */
+    .section { margin-block: 2.5rem; }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-head h2 { font-size: clamp(1.25rem, 3vw, 1.625rem); }
+
+    .section-meta { color: var(--color-muted); font-size: 0.875rem; }
+
+    /* Summary stat cards */
+    .stat-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      contain: layout style paint;
+      padding: 1.25rem;
+    }
+
+    .stat-value {
+      color: var(--color-primary);
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .stat-value.pass { color: var(--color-pass); }
+
+    .stat-label { color: var(--color-muted); font-size: 0.875rem; margin-top: 0.25rem; }
+
+    /* Benchmark cards */
+    .card {
+      background: var(--color-card);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      contain: layout style paint;
+      padding: 1.25rem;
+      transition: transform 200ms var(--ease);
+    }
+
+    .card:hover { transform: translateY(-2px); }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .card-head h3 {
+      font-family: var(--font-mono);
+      font-size: 1.0625rem;
+      overflow-wrap: anywhere;
+    }
+
+    .card-desc { color: var(--color-muted); font-size: 0.875rem; margin-block: 0.375rem 0.25rem; }
+
+    .badge {
+      display: inline-block;
+      flex-shrink: 0;
+      padding: 0.125rem 0.625rem;
+      border: 1px solid var(--color-pass-border);
+      border-radius: 999px;
+      background: var(--color-pass-bg);
+      color: var(--color-pass);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    /* Metric blocks: measured vs required vs margin */
+    .metric { border-top: 1px solid var(--color-line); margin-top: 0.5rem; padding-top: 0.75rem; }
+
+    .metric-name {
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      margin-bottom: 0.375rem;
+      overflow-wrap: anywhere;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .metric-grid dt {
+      color: var(--color-muted);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .metric-grid dd { font-size: 0.9375rem; font-weight: 600; overflow-wrap: anywhere; }
+
+    /* Results table */
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--color-card);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius);
+    }
+
+    .results {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 0.8125rem;
+    }
+
+    .results caption {
+      caption-side: top;
+      color: var(--color-muted);
+      font-size: 0.8125rem;
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+
+    .results th, .results td {
+      padding: 0.625rem 0.375rem;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: break-word;
+    }
+
+    .results thead th {
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid var(--color-line);
+      color: var(--color-muted);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .results tbody tr { border-top: 1px solid var(--color-line); }
+    .results tbody tr:first-child { border-top: 0; }
+
+    .c-benchmark { width: 15%; }
+    .c-metric { width: 22%; }
+    .c-measured { width: 12%; }
+    .c-required { width: 14%; }
+    .c-margin { width: 19%; }
+    .c-status { width: 18%; }
+
+    .status-pass { color: var(--color-pass); font-weight: 700; }
+
+    /* Below-the-fold performance hint */
+    .section-table { content-visibility: auto; contain-intrinsic-size: auto 50rem; }
+
+    /* Footer */
+    .site-footer { border-top: 1px solid var(--color-line); margin-top: 2.5rem; padding-block: 1.5rem; }
+
+    .site-footer p { color: var(--color-muted); font-size: 0.875rem; max-width: 65ch; }
+
+    /* Entrance animation: opacity + transform only */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(0.5rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in { animation: rise 250ms var(--ease) both; }
+
+    /* Keyboard focus */
+    :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+    /* Reduced motion fallback */
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in, .card, .card:hover { animation: none; transition: none; transform: none; }
+    }
+
+    /* Larger screens */
+    @media (min-width: 640px) {
+      .results { font-size: 0.875rem; }
+      .results th, .results td { padding: 0.625rem 0.75rem; }
+    }
+
+    @media (min-width: 1024px) {
+      .card, .stat-card { padding: 1.5rem; }
+      .results { font-size: 0.9375rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <p class="eyebrow">Precision Health OS</p>
+      <h1>Benchmark Results</h1>
+      <p class="lede">Seven evaluation benchmarks and twelve metrics, each measured against its required threshold. Every benchmark passes.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section fade-in" aria-labelledby="summary-title">
+      <div class="section-head">
+        <h2 id="summary-title">Suite summary</h2>
+        <p class="section-meta">All benchmarks passing</p>
+      </div>
+      <div class="grid">
+        <article class="stat-card">
+          <p class="stat-value">7/7</p>
+          <p class="stat-label">Benchmarks passed</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-value pass">100%</p>
+          <p class="stat-label">Pass rate</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-value">1.000</p>
+          <p class="stat-label">Mean score</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section fade-in" aria-labelledby="benchmarks-title">
+      <div class="section-head">
+        <h2 id="benchmarks-title">Benchmark details</h2>
+        <p class="section-meta">Measured vs required, per metric</p>
+      </div>
+      <div class="grid">
+        <article class="card" aria-labelledby="card-tsp">
+          <div class="card-head">
+            <h3 id="card-tsp">tsp_quality</h3>
+            <span class="badge">PASS</span>
+          </div>
+          <p class="card-desc">Traveling-solution quality against the neural-network baseline.</p>
+          <div class="metric">
+            <p class="metric-name">no_regression_vs_nn</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.0</dd></div>
+              <div><dt>Required</dt><dd>1.0</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+          <div class="metric">
+            <p class="metric-name">within_10pct_of_optimal</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>0.97</dd></div>
+              <div><dt>Required</dt><dd>0.80</dd></div>
+              <div><dt>Margin</dt><dd>+0.17 above</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="card" aria-labelledby="card-knapsack">
+          <div class="card-head">
+            <h3 id="card-knapsack">knapsack_optimality</h3>
+            <span class="badge">PASS</span>
+          </div>
+          <p class="card-desc">Optimality of knapsack selections.</p>
+          <div class="metric">
+            <p class="metric-name">optimality_rate</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.0</dd></div>
+              <div><dt>Required</dt><dd>1.0</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="card" aria-labelledby="card-vrp">
+          <div class="card-head">
+            <h3 id="card-vrp">vrp_feasibility</h3>
+            <span class="badge">PASS</span>
+          </div>
+          <p class="card-desc">Feasibility of vehicle-routing plans.</p>
+          <div class="metric">
+            <p class="metric-name">all_nodes_served_rate</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.0</dd></div>
+              <div><dt>Required</dt><dd>1.0</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+          <div class="metric">
+            <p class="metric-name">capacity_respected_rate</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.0</dd></div>
+              <div><dt>Required</dt><dd>1.0</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="card" aria-labelledby="card-bipartite">
+          <div class="card-head">
+            <h3 id="card-bipartite">bipartite_correctness</h3>
+            <span class="badge">PASS</span>
+          </div>
+          <p class="card-desc">Correctness of bipartite patient matching.</p>
+          <div class="metric">
+            <p class="metric-name">no_ineligible_matches</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.0</dd></div>
+              <div><dt>Required</dt><dd>1.0</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+          <div class="metric">
+            <p class="metric-name">found_an_eligible_patient</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.0</dd></div>
+              <div><dt>Required</dt><dd>1.0</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="card" aria-labelledby="card-anomaly">
+          <div class="card-head">
+            <h3 id="card-anomaly">anomaly_detection</h3>
+            <span class="badge">PASS</span>
+          </div>
+          <p class="card-desc">Separation of anomalous spikes from normal variation.</p>
+          <div class="metric">
+            <p class="metric-name">spike_recall</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.0</dd></div>
+              <div><dt>Required</dt><dd>1.0</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+          <div class="metric">
+            <p class="metric-name">normal_specificity</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>0.95</dd></div>
+              <div><dt>Required</dt><dd>0.95</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="card" aria-labelledby="card-latency">
+          <div class="card-head">
+            <h3 id="card-latency">solver_latency</h3>
+            <span class="badge">PASS</span>
+          </div>
+          <p class="card-desc">Solver response time per problem class.</p>
+          <div class="metric">
+            <p class="metric-name">tsp_ms</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.33 ms</dd></div>
+              <div><dt>Required</dt><dd>≤ 2000 ms</dd></div>
+              <div><dt>Margin</dt><dd>1998.67 ms headroom</dd></div>
+            </dl>
+          </div>
+          <div class="metric">
+            <p class="metric-name">vrp_ms</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>2.09 ms</dd></div>
+              <div><dt>Required</dt><dd>≤ 2000 ms</dd></div>
+              <div><dt>Margin</dt><dd>1997.91 ms headroom</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="card" aria-labelledby="card-eval">
+          <div class="card-head">
+            <h3 id="card-eval">evaluation_framework</h3>
+            <span class="badge">PASS</span>
+          </div>
+          <p class="card-desc">Correctness of the evaluation framework.</p>
+          <div class="metric">
+            <p class="metric-name">framework_correctness</p>
+            <dl class="metric-grid">
+              <div><dt>Measured</dt><dd>1.0</dd></div>
+              <div><dt>Required</dt><dd>1.0</dd></div>
+              <div><dt>Margin</dt><dd>Exact</dd></div>
+            </dl>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section section-table fade-in" aria-labelledby="results-title">
+      <div class="section-head">
+        <h2 id="results-title">Full results table</h2>
+        <p class="section-meta">12 metrics across 7 benchmarks</p>
+      </div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Benchmark results table">
+        <table class="results">
+          <caption>Precision Health OS benchmark suite — measured values versus required thresholds. All 12 metrics pass.</caption>
+          <colgroup>
+            <col class="c-benchmark">
+            <col class="c-metric">
+            <col class="c-measured">
+            <col class="c-required">
+            <col class="c-margin">
+            <col class="c-status">
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Benchmark</th>
+              <th scope="col">Metric</th>
+              <th scope="col">Measured</th>
+              <th scope="col">Required</th>
+              <th scope="col">Margin</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" rowspan="2">tsp_quality</th>
+              <td>no_regression_vs_nn</td>
+              <td>1.0</td>
+              <td>1.0</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <td>within_10pct_of_optimal</td>
+              <td>0.97</td>
+              <td>0.80</td>
+              <td>+0.17 above</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <th scope="row">knapsack_optimality</th>
+              <td>optimality_rate</td>
+              <td>1.0</td>
+              <td>1.0</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <th scope="row" rowspan="2">vrp_feasibility</th>
+              <td>all_nodes_served_rate</td>
+              <td>1.0</td>
+              <td>1.0</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <td>capacity_respected_rate</td>
+              <td>1.0</td>
+              <td>1.0</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <th scope="row" rowspan="2">bipartite_correctness</th>
+              <td>no_ineligible_matches</td>
+              <td>1.0</td>
+              <td>1.0</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <td>found_an_eligible_patient</td>
+              <td>1.0</td>
+              <td>1.0</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <th scope="row" rowspan="2">anomaly_detection</th>
+              <td>spike_recall</td>
+              <td>1.0</td>
+              <td>1.0</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <td>normal_specificity</td>
+              <td>0.95</td>
+              <td>0.95</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <th scope="row" rowspan="2">solver_latency</th>
+              <td>tsp_ms</td>
+              <td>1.33 ms</td>
+              <td>≤ 2000 ms</td>
+              <td>1998.67 ms headroom</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <td>vrp_ms</td>
+              <td>2.09 ms</td>
+              <td>≤ 2000 ms</td>
+              <td>1997.91 ms headroom</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+            <tr>
+              <th scope="row">evaluation_framework</th>
+              <td>framework_correctness</td>
+              <td>1.0</td>
+              <td>1.0</td>
+              <td>Exact</td>
+              <td class="status-pass">PASS</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>All seven benchmarks passed every required threshold. Measured values come from the Precision Health OS evaluation suite; margins are the arithmetic difference between measured and required values — for solver latency, the headroom under the 2000 ms limit.</p>
+    </div>
+  </footer>
+</body>
+</html>

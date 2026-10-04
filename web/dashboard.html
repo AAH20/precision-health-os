@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Precision Health OS — Dashboard</title>
+  <style>
+    :root {
+      --color-primary: #00d4ff;
+      --color-secondary: #8b5cff;
+      --color-bg: #0d1b2e;
+      --color-card: #142236;
+      --color-text: #ffffff;
+      --color-muted: #b0b0b0;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --color-critical: #ff6b6b;
+      --color-high: #ff8800;
+      --color-medium: #ffcc00;
+      --color-low: #44aaff;
+      --color-info: #9e9e9e;
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 2rem;
+      --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--space-sm);
+    }
+
+    header {
+      padding: var(--space-lg) 0 var(--space-md);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      line-height: 1.2;
+      text-wrap: balance;
+    }
+
+    .tagline {
+      color: var(--color-muted);
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      margin-top: var(--space-xs);
+      max-width: 65ch;
+    }
+
+    nav { margin-top: var(--space-md); }
+
+    .nav-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      list-style: none;
+    }
+
+    .nav-list a {
+      display: block;
+      padding: var(--space-xs) var(--space-sm);
+      color: var(--color-primary);
+      text-decoration: none;
+      border-radius: var(--radius);
+    }
+
+    .nav-list a:hover,
+    .nav-list a:focus-visible {
+      background: rgba(0, 212, 255, 0.15);
+      color: var(--color-text);
+    }
+
+    main { padding: var(--space-lg) 0; }
+
+    section {
+      margin-bottom: var(--space-lg);
+      content-visibility: auto;
+    }
+
+    h2 {
+      font-size: clamp(1.4rem, 3vw, 1.8rem);
+      line-height: 1.2;
+      margin-bottom: var(--space-md);
+      text-wrap: balance;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .card {
+      background: var(--color-card);
+      border-radius: var(--radius);
+      padding: var(--space-md);
+      box-shadow: var(--shadow);
+      transition: transform var(--transition), opacity var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      opacity: 0.95;
+    }
+
+    .card h3 {
+      font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+      line-height: 1.2;
+      margin-bottom: var(--space-xs);
+      color: var(--color-primary);
+    }
+
+    .card p {
+      color: var(--color-muted);
+      max-width: 65ch;
+    }
+
+    .stat-value {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--color-primary);
+    }
+
+    .stat-label {
+      color: var(--color-muted);
+      font-size: 0.9rem;
+      margin-top: var(--space-xs);
+    }
+
+    .severity-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-sm);
+      list-style: none;
+    }
+
+    .severity-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm);
+      background: var(--color-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .severity-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .severity-indicator--critical { background: var(--color-critical); }
+    .severity-indicator--high { background: var(--color-high); }
+    .severity-indicator--medium { background: var(--color-medium); }
+    .severity-indicator--low { background: var(--color-low); }
+    .severity-indicator--info { background: var(--color-info); }
+
+    .severity-name { font-weight: 600; }
+
+    .severity-desc {
+      color: var(--color-muted);
+      font-size: 0.85rem;
+    }
+
+    .module-name {
+      font-family: monospace;
+      font-size: 1rem;
+      color: var(--color-secondary);
+    }
+
+    .module-purpose {
+      color: var(--color-text);
+      margin-top: var(--space-xs);
+    }
+
+    .module-classes {
+      color: var(--color-muted);
+      font-size: 0.85rem;
+      margin-top: var(--space-xs);
+      font-family: monospace;
+    }
+
+    .solver-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--color-card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .solver-table th,
+    .solver-table td {
+      padding: var(--space-sm);
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .solver-table th {
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    .solver-table tr:last-child td { border-bottom: none; }
+
+    .solver-table td { color: var(--color-muted); }
+
+    .solver-table td:first-child {
+      color: var(--color-text);
+      font-weight: 500;
+    }
+
+    .benchmark-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      list-style: none;
+      margin-top: var(--space-md);
+    }
+
+    .benchmark-tag {
+      padding: var(--space-xs) var(--space-sm);
+      background: rgba(139, 92, 255, 0.2);
+      color: var(--color-secondary);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      font-family: monospace;
+    }
+
+    footer {
+      padding: var(--space-lg) 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      color: var(--color-muted);
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Precision Health OS</h1>
+      <p class="tagline">Unified precision health platform integrating genomics, clinical decision support, medical imaging, wearables, drug discovery, and health IoT.</p>
+    </div>
+    <nav aria-label="Main navigation">
+      <div class="container">
+        <ul class="nav-list">
+          <li><a href="#status">System Status</a></li>
+          <li><a href="#alerts">Clinical Alerts</a></li>
+          <li><a href="#modules">Modules</a></li>
+          <li><a href="#solvers">Solver Stats</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="status" aria-labelledby="status-heading">
+      <h2 id="status-heading">System Status</h2>
+      <div class="grid">
+        <article class="card">
+          <p class="stat-value">488</p>
+          <p class="stat-label">Tests Passing</p>
+        </article>
+        <article class="card">
+          <p class="stat-value">98.64%</p>
+          <p class="stat-label">Code Coverage</p>
+        </article>
+        <article class="card">
+          <p class="stat-value">10</p>
+          <p class="stat-label">Platform Modules</p>
+        </article>
+        <article class="card">
+          <p class="stat-value">7</p>
+          <p class="stat-label">NP-Hard Problem Classes</p>
+        </article>
+        <article class="card">
+          <p class="stat-value">5</p>
+          <p class="stat-label">Architecture Layers</p>
+        </article>
+        <article class="card">
+          <p class="stat-value">3.11+</p>
+          <p class="stat-label">Python Version</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="alerts" aria-labelledby="alerts-heading">
+      <h2 id="alerts-heading">Clinical Alerts by Severity</h2>
+      <ul class="severity-list">
+        <li class="severity-item">
+          <span class="severity-indicator severity-indicator--critical" aria-hidden="true"></span>
+          <div>
+            <p class="severity-name">Critical</p>
+            <p class="severity-desc">Immediate intervention required</p>
+          </div>
+        </li>
+        <li class="severity-item">
+          <span class="severity-indicator severity-indicator--high" aria-hidden="true"></span>
+          <div>
+            <p class="severity-name">High</p>
+            <p class="severity-desc">Urgent review needed</p>
+          </div>
+        </li>
+        <li class="severity-item">
+          <span class="severity-indicator severity-indicator--medium" aria-hidden="true"></span>
+          <div>
+            <p class="severity-name">Medium</p>
+            <p class="severity-desc">Standard priority</p>
+          </div>
+        </li>
+        <li class="severity-item">
+          <span class="severity-indicator severity-indicator--low" aria-hidden="true"></span>
+          <div>
+            <p class="severity-name">Low</p>
+            <p class="severity-desc">Routine monitoring</p>
+          </div>
+        </li>
+        <li class="severity-item">
+          <span class="severity-indicator severity-indicator--info" aria-hidden="true"></span>
+          <div>
+            <p class="severity-name">Info</p>
+            <p class="severity-desc">Informational only</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <section id="modules" aria-labelledby="modules-heading">
+      <h2 id="modules-heading">Platform Modules</h2>
+      <div class="grid">
+        <article class="card">
+          <h3 class="module-name">optimization</h3>
+          <p class="module-purpose">NP-hard solvers for healthcare logistics</p>
+          <p class="module-classes">VRPTimeWindowsSolver, TSPSolver, KnapsackSolver, BipartiteMatchingSolver</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">clinical</h3>
+          <p class="module-purpose">CDSS engine, alert lifecycle, pathway optimization</p>
+          <p class="module-classes">CDSSEngine, AlertManager, ClinicalPathwayOptimizer</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">ml</h3>
+          <p class="module-purpose">Disease prediction, drug response, image analysis</p>
+          <p class="module-classes">DiseasePredictor, DrugResponseModel, MedicalImageAnalyzer</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">iot</h3>
+          <p class="module-purpose">Wearable ingestion, anomaly detection, remote monitoring</p>
+          <p class="module-classes">WearableDataPipeline, AnomalyDetector, RemotePatientMonitor</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">genomics</h3>
+          <p class="module-purpose">Variant calling, pharmacogenomics, risk scoring</p>
+          <p class="module-classes">VariantCaller, PharmacogenomicScorer, RiskPredictor</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">drug_discovery</h3>
+          <p class="module-purpose">Molecular docking, ADMET, trial matching</p>
+          <p class="module-classes">MolecularDocking, ADMETPredictor, ClinicalTrialMatcher</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">security</h3>
+          <p class="module-purpose">HIPAA compliance, encryption, audit, RBAC</p>
+          <p class="module-classes">EncryptionService, AuditTrail, RBACService, HIPAACompliance</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">integration</h3>
+          <p class="module-purpose">FHIR/HL7, EHR connectivity, event bus</p>
+          <p class="module-classes">FHIRConverter, HL7v2Parser, EventBus, EHRConnector</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">api</h3>
+          <p class="module-purpose">Unified API facade</p>
+          <p class="module-classes">PrecisionHealthAPI</p>
+        </article>
+        <article class="card">
+          <h3 class="module-name">models</h3>
+          <p class="module-purpose">Validated Pydantic data models</p>
+          <p class="module-classes">Patient, VitalSigns, ClinicalAlert, GenomicVariant, AuditEvent</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="solvers" aria-labelledby="solvers-heading">
+      <h2 id="solvers-heading">NP-Hard Solver Statistics</h2>
+      <table class="solver-table">
+        <thead>
+          <tr>
+            <th scope="col">Problem</th>
+            <th scope="col">Complexity</th>
+            <th scope="col">Approach</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Patient Scheduling (VRPTW)</td>
+            <td>O(n²·2ⁿ)</td>
+            <td>Clarke-Wright savings heuristic</td>
+          </tr>
+          <tr>
+            <td>Treatment Planning (TSP)</td>
+            <td>O(n!)</td>
+            <td>Nearest-neighbor + 2-opt local search</td>
+          </tr>
+          <tr>
+            <td>Drug Combination (Knapsack)</td>
+            <td>O(n·W) pseudo-poly</td>
+            <td>Dynamic programming with backtracking</td>
+          </tr>
+          <tr>
+            <td>Clinical Trial Matching (Bipartite)</td>
+            <td>O(V·E)</td>
+            <td>Greedy maximum matching with scores</td>
+          </tr>
+          <tr>
+            <td>Genome Assembly</td>
+            <td>NP-hard</td>
+            <td>Approximation heuristics</td>
+          </tr>
+          <tr>
+            <td>Haplotype Inference</td>
+            <td>NP-hard</td>
+            <td>Exact (small instances)</td>
+          </tr>
+          <tr>
+            <td>Protein-Ligand Docking</td>
+            <td>Continuous NP-hard</td>
+            <td>Shape-complementarity scoring</td>
+          </tr>
+        </tbody>
+      </table>
+      <ul class="benchmark-list" aria-label="Solver benchmarks">
+        <li class="benchmark-tag">tsp_quality</li>
+        <li class="benchmark-tag">knapsack_optimality</li>
+        <li class="benchmark-tag">vrp_feasibility</li>
+        <li class="benchmark-tag">bipartite_correctness</li>
+        <li class="benchmark-tag">anomaly_detection</li>
+        <li class="benchmark-tag">solver_latency</li>
+        <li class="benchmark-tag">evaluation_framework</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>MIT License — Precision Health OS. Built for precision medicine at scale.</p>
+    </div>
+  </footer>
+</body>
+</html>

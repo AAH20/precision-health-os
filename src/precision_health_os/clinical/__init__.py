@@ -129,27 +129,29 @@ class CDSSEngine:
         return alerts
 
     def evaluate_rules(self, patient: Patient, context: dict[str, Any]) -> list[ClinicalAlert]:
-        """Evaluate custom clinical rules against patient context."""
+        """Evaluate custom clinical rules against patient context.
+
+        ``_evaluate_condition`` is total — it parses and evaluates in a sandbox
+        and returns False on any malformed or unsafe expression — so no
+        exception can escape this loop and no guard is needed here.
+        """
         alerts: list[ClinicalAlert] = []
         for rule in self._rules.values():
             if not rule.enabled:
                 continue
-            try:
-                if self._evaluate_condition(rule.condition, patient, context):
-                    alerts.append(
-                        ClinicalAlert(
-                            id=generate_id(),
-                            patient_id=patient.id,
-                            severity=rule.severity,
-                            title=rule.name,
-                            description=rule.message,
-                            source=f"rule:{rule.id}",
-                            confidence=0.8,
-                            recommendations=rule.recommendations,
-                        )
+            if self._evaluate_condition(rule.condition, patient, context):
+                alerts.append(
+                    ClinicalAlert(
+                        id=generate_id(),
+                        patient_id=patient.id,
+                        severity=rule.severity,
+                        title=rule.name,
+                        description=rule.message,
+                        source=f"rule:{rule.id}",
+                        confidence=0.8,
+                        recommendations=rule.recommendations,
                     )
-            except Exception as e:
-                logger.warning(f"Rule {rule.id} evaluation failed: {e}")
+                )
         return alerts
 
     def _evaluate_condition(
