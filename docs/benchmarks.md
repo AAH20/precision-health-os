@@ -143,12 +143,13 @@ def bench_my_solver() -> dict[str, float]:
     # ... run solver, measure metric ...
     return {"my_metric": measured_value}
 
+
 harness.register(
     Benchmark(
         "my_solver",
         bench_my_solver,
-        {"my_metric": 0.95},          # required value
-        lower_is_better={"my_metric"}, # omit if higher is better
+        {"my_metric": 0.95},  # required value
+        lower_is_better={"my_metric"},  # omit if higher is better
     )
 )
 ```

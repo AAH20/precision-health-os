@@ -614,16 +614,21 @@ api = PrecisionHealthAPI()
 
 # Register a patient
 patient = Patient(
-    id="p001", mrn="MRN001", name="John Doe",
-    date_of_birth=datetime(1990, 1, 1), sex="male",
+    id="p001",
+    mrn="MRN001",
+    name="John Doe",
+    date_of_birth=datetime(1990, 1, 1),
+    sex="male",
 )
 api.register_patient(patient)
 
 # Ingest vitals — alerts fire automatically on threshold breach
 vitals = VitalSigns(
     patient_id="p001",
-    heart_rate_bpm=72, spo2_percent=98,
-    blood_pressure_systolic=120, blood_pressure_diastolic=80,
+    heart_rate_bpm=72,
+    spo2_percent=98,
+    blood_pressure_systolic=120,
+    blood_pressure_diastolic=80,
 )
 alerts = api.ingest_vitals(vitals)
 ```
@@ -670,9 +675,13 @@ audit.log("dr_smith", "read", "Patient", "p001", ip_address="10.0.0.5")
 assert audit.verify_chain()  # Hash-chain integrity check
 
 # HIPAA Safe Harbor de-identification
-deidentified = HIPAACompliance.deidentify({
-    "name": "John Doe", "ssn": "123-45-6789", "diagnosis": "diabetes",
-})
+deidentified = HIPAACompliance.deidentify(
+    {
+        "name": "John Doe",
+        "ssn": "123-45-6789",
+        "diagnosis": "diabetes",
+    }
+)
 ```
 
 ---
@@ -834,10 +843,10 @@ t = EvolutionTracker(metric="coverage")
 for gen, value in enumerate([84.0, 89.0, 98.57], start=1):
     t.record(gen, value)
 
-t.is_improving()      # True
-t.improvement()       # 14.64
-t.best_generation()   # 3
-t.regressed()         # False
+t.is_improving()  # True
+t.improvement()  # 14.64
+t.best_generation()  # 3
+t.regressed()  # False
 ```
 
 The **quality ratchet** locks this in: the coverage gate is 95% against a current 98.57%, so a genuine regression fails CI.

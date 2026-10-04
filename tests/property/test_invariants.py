@@ -235,10 +235,10 @@ class TestTSPSolver:
     # floating-point underflow makes the distance 0.0. The "> 0"
     # invariant only applies when points are meaningfully separated.
     non_degenerate_locations = locations_strategy.filter(
-        lambda locs: min(
-            math.hypot(a.x - b.x, a.y - b.y) for a, b in itertools.combinations(locs, 2)
+        lambda locs: (
+            min(math.hypot(a.x - b.x, a.y - b.y) for a, b in itertools.combinations(locs, 2))
+            > 1e-10
         )
-        > 1e-10
     )
 
     @given(locations=non_degenerate_locations)

@@ -43,7 +43,7 @@ class QualitySnapshot:
         unknown = set(self.metrics) - set(TRACKED_METRICS)
         if unknown:
             raise ValueError(
-                f"unknown metric(s): {sorted(unknown)}. " f"Known: {sorted(TRACKED_METRICS)}"
+                f"unknown metric(s): {sorted(unknown)}. Known: {sorted(TRACKED_METRICS)}"
             )
 
     def to_dict(self) -> dict[str, Any]:

@@ -65,8 +65,7 @@ class TestAcknowledgeAlertAuditSemantics:
         assert result is True  # idempotent success
         events_after_second = len(api.audit._events)
         assert events_after_second == events_after_first, (
-            f"re-acknowledge logged {events_after_second - events_after_first} "
-            f"extra audit event(s)"
+            f"re-acknowledge logged {events_after_second - events_after_first} extra audit event(s)"
         )
 
     def test_unknown_alert_does_not_log_audit(self) -> None:
@@ -90,9 +89,9 @@ class TestEvolutionTrackerHistoryImmutability:
         h[0]["score"] = 99.0
 
         # Internal state must be unaffected
-        assert (
-            tracker.history()[0]["score"] == 0.5
-        ), "mutating returned history corrupted internal state"
+        assert tracker.history()[0]["score"] == 0.5, (
+            "mutating returned history corrupted internal state"
+        )
 
     def test_mutating_returned_list_does_not_corrupt_tracker(self) -> None:
         tracker = EvolutionTracker(metric="score")
