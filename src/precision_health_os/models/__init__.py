@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -40,7 +40,7 @@ class VitalSigns(BaseModel):
     glucose_mg_dl: float | None = Field(None, ge=0, le=1000)
 
 
-class AlertSeverity(str, Enum):
+class AlertSeverity(StrEnum):
     """Alert severity levels."""
 
     CRITICAL = "critical"

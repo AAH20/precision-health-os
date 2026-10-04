@@ -71,8 +71,7 @@ class CDSSEngine:
                         severity=AlertSeverity.CRITICAL,
                         title=f"Critical {vital_name.replace('_', ' ').title()}",
                         description=(
-                            f"{vital_name} = {value} "
-                            f"(critical low: {thresholds['critical_low']})"
+                            f"{vital_name} = {value} (critical low: {thresholds['critical_low']})"
                         ),
                         source="vital_thresholds",
                         confidence=0.95,
@@ -90,8 +89,7 @@ class CDSSEngine:
                         severity=AlertSeverity.CRITICAL,
                         title=f"Critical {vital_name.replace('_', ' ').title()}",
                         description=(
-                            f"{vital_name} = {value} "
-                            f"(critical high: {thresholds['critical_high']})"
+                            f"{vital_name} = {value} (critical high: {thresholds['critical_high']})"
                         ),
                         source="vital_thresholds",
                         confidence=0.95,
