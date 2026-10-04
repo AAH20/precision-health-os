@@ -1,0 +1,336 @@
+{
+  "cluster": "Medical Imaging AI",
+  "bottlenecks": [
+    {
+      "description": "Domain shift across imaging sites and scanners causes significant performance degradation in deployed models. Non-biological variations in hardware, acquisition protocols, and patient populations lead to models failing on external validation data.",
+      "severity": "high",
+      "evidence": "Dalmaz et al. (2024) 'Improving Multi-Center Generalizability of GAN-Based Fat Suppression using Federated Learning'; Wei et al. (2019) domain shift in multi-site MRI; FedDAPL (2025) 'Toward Client-Private Generalization in Federated Learning'"
+    },
+    {
+      "description": "GPU memory constraints for whole slide image (WSI) processing in computational pathology. A single WSI at 40x magnification can be 100,000 x 100,000 pixels (~2GB compressed, ~30GB uncompressed), making end-to-end training on a single GPU infeasible without tiling strategies that sacrifice spatial context.",
+      "severity": "high",
+      "evidence": "FBTA paper (CVPR 2026) 'Enabling Single-GPU End-to-End Gigapixel WSI Classification'; arccompute.io GPU infrastructure analysis; Lu et al. (2021) 'Federated learning for computational pathology on gigapixel whole slide images'"
+    },
+    {
+      "description": "Annotation scarcity and cost. Pixel-level manual annotation by expert radiologists and pathologists is expensive and time-consuming, leading to small, heavily curated datasets that limit model generalization.",
+      "severity": "high",
+      "evidence": "Campanella et al. (2019) 'Clinical-grade computational pathology using weakly supervised deep learning on whole slide images' Nature Medicine; Isensee et al. (2021) nnU-Net Nature Methods"
+    },
+    {
+      "description": "Inference latency requirements in acute care settings. AI triage for stroke, pulmonary embolism, and chest X-ray interpretation requires results within seconds to minutes, creating real-time constraints that cloud offloading cannot reliably guarantee.",
+      "severity": "high",
+      "evidence": "arccompute.io 'GPU Infrastructure for Medical Imaging AI' - clinical SLA requirements; Efficient Deep Learning for Medical Imaging (2025) arXiv:2602.00910"
+    },
+    {
+      "description": "Data privacy regulations (HIPAA, GDPR) hinder data consolidation for training, creating data silos that limit model performance and generalizability.",
+      "severity": "high",
+      "evidence": "Kaissis et al. (2024) 'Reconciling privacy and accuracy in AI for medical imaging' Nature Machine Intelligence; Scientific Reports (2024) 'The potential of federated learning for self-configuring medical object detection'"
+    },
+    {
+      "description": "Diffusion models for 3D medical image synthesis require hundreds of sequential U-Net evaluations per sample, demanding hundreds of GPU-hours even for modest datasets.",
+      "severity": "medium",
+      "evidence": "Performance Analysis of 3D Generative Diffusion Models (2025) arXiv:2606.19365 - Med-DDPM analysis"
+    },
+    {
+      "description": "Quadratic scaling of self-attention in transformer architectures limits applicability to gigapixel histopathology slides and high-resolution 3D volumetric scans.",
+      "severity": "medium",
+      "evidence": "Efficient Deep Learning for Medical Imaging (2025) arXiv:2602.00910 - State Space Models (Mamba) as alternative"
+    }
+  ],
+  "np_hard_problems": [
+    {
+      "problem": "Optimal patch selection and tiling strategy for whole slide image analysis under memory constraints",
+      "complexity": "NP-hard (reduces to maximum coverage problem with spatial constraints)",
+      "current_approaches": [
+        "Two-stage patch-to-bag pipelines with frozen feature extractors",
+        "Multiple Instance Learning (MIL) with attention-based pooling",
+        "Pseudo-bag construction via Instance Sampling without Replacement (ISR) with KMeans clustering",
+        "Feature bridging and translation alignment (FBTA)"
+      ],
+      "gaps": [
+        "Frozen feature extractors create semantic gap with downstream classification objective",
+        "End-to-end backpropagation through tens of thousands of patches exceeds single-GPU memory",
+        "Tiling sacrifices spatial context critical for diagnosis"
+      ]
+    },
+    {
+      "problem": "Multi-objectivity optimization for segmentation architecture search (accuracy vs. computational cost vs. memory footprint)",
+      "complexity": "NP-hard (multi-objective combinatorial optimization)",
+      "current_approaches": [
+        "nnU-Net self-configuring framework with rule-based architecture selection",
+        "Auto3DSeg with SegResNet, DiNTS, SwinUNETR architectures",
+        "Neural architecture search (NAS) with hardware-aware constraints"
+      ],
+      "gaps": [
+        "Search space grows exponentially with number of objectives",
+        "Hardware-specific optima do not transfer across GPU generations",
+        "No guarantee of Pareto optimality in practice"
+      ]
+    },
+    {
+      "problem": "Feature selection and dimensionality reduction for radiomics-based classification",
+      "complexity": "NP-hard (subset selection problem)",
+      "current_approaches": [
+        "LASSO and elastic net regularization",
+        "Recursive feature elimination",
+        "Deep learning-based automatic feature extraction"
+      ],
+      "gaps": [
+        "High-dimensional feature spaces (thousands of radiomic features) with small sample sizes",
+        "Interpretability vs. performance tradeoff",
+        "Site-specific feature instability"
+      ]
+    },
+    {
+      "problem": "Optimal client selection and aggregation strategy for federated learning with non-IID data distributions",
+      "complexity": "NP-hard (combinatorial optimization over client subsets)",
+      "current_approaches": [
+        "FedAvg with uniform aggregation",
+        "FedProx with proximal regularization",
+        "Personalized federated learning (pFLSynth)",
+        "Domain-adversarial neural networks (DANN) with proximal regularization (FedDAPL)"
+      ],
+      "gaps": [
+        "Communication rounds scale with number of clients",
+        "Non-IID data causes client drift",
+        "Privacy-accuracy tradeoff with differential privacy"
+      ]
+    }
+  ],
+  "sota_approaches": [
+    {
+      "name": "nnU-Net",
+      "description": "Self-configuring framework for U-Net-based medical image segmentation that automatically adapts preprocessing, architecture, training, and postprocessing to any dataset without manual intervention. Achieves state-of-the-art on 23 public datasets across multiple modalities.",
+      "citation": "Isensee et al. (2021) 'nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation' Nature Methods 18:203-211. doi:10.1038/s41592-020-01008-z"
+    },
+    {
+      "name": "MONAI (Medical Open Network for AI)",
+      "description": "PyTorch-based open-source framework for deep learning in healthcare imaging with domain-specific transforms, validated 3D architectures (UNETR, SwinUNETR, VISTA-3D), and reproducible clinical deployment pipelines.",
+      "citation": "Cardoso et al. (2022) 'MONAI: An open-source framework for deep learning in healthcare' arXiv:2204.12318. https://github.com/Project-MONAI/MONAI"
+    },
+    {
+      "name": "Curia",
+      "description": "Multi-modal foundation model for radiology trained on 200+ million CT and MRI images (130TB, 150K exams) using DINOv2 self-supervised learning. Meets or surpasses radiologist performance on 19-task external validation benchmark.",
+      "citation": "Dancette et al. (2025) 'Curia: A Multi-Modal Foundation Model for Radiology' arXiv:2509.06830"
+    },
+    {
+      "name": "nnFoundation",
+      "description": "3D foundation models for radiology trained on 2.1 million CT, MRI, and PET volumes from 125 datasets. Convolutional and transformer variants evaluated on 108 tasks including segmentation, detection, classification, and report generation.",
+      "citation": "Human Radiome Project (2025) 'nnFoundation: 3D Foundation Models for Radiology' arXiv:2609.26924"
+    },
+    {
+      "name": "TITAN",
+      "description": "Multimodal whole-slide foundation model for pathology pretrained on 335,645 WSIs with vision-language alignment using pathology reports and synthetic captions. Enables zero-shot classification, rare cancer retrieval, and pathology report generation.",
+      "citation": "Ding et al. (2024) 'Multimodal Whole Slide Foundation Model for Pathology' arXiv:2411.19666"
+    },
+    {
+      "name": "PanDerm",
+      "description": "Multimodal dermatology foundation model pretrained on 2+ million skin disease images from 11 clinical institutions across 4 imaging modalities. Outperforms clinicians by 10.2% in early-stage melanoma detection.",
+      "citation": "Nature Medicine (2025) 'A multimodal vision foundation model for clinical dermatology' doi:10.1038/s41591-025-03747-y"
+    },
+    {
+      "name": "Federated Learning with Differential Privacy",
+      "description": "Privacy-preserving collaborative training across institutions without data sharing. HistoFL framework for computational pathology on gigapixel WSIs with weakly-supervised attention MIL and differential privacy.",
+      "citation": "Lu et al. (2021) 'Federated learning for computational pathology on gigapixel whole slide images' Medical Image Analysis. https://github.com/mahmoodlab/HistoFL"
+    }
+  ],
+  "failure_modes": [
+    {
+      "mode": "Domain shift and poor generalization to external sites",
+      "mitigation": "Federated learning with domain generalization (FedDAPL), multi-site validation, domain adaptation techniques, and continuous monitoring of model performance across sites"
+    },
+    {
+      "mode": "Overfitting to limited training data",
+      "mitigation": "Self-supervised pretraining on large unlabeled datasets, data augmentation, transfer learning from foundation models, and few-shot learning approaches"
+    },
+    {
+      "mode": "Hallucination in generative models for image synthesis",
+      "mitigation": "Physics-informed models, multi-site validation, uncertainty quantification, and human-in-the-loop verification"
+    },
+    {
+      "mode": "Dataset bias and health equity disparities",
+      "mitigation": "Diffusion-based synthetic data generation for underrepresented groups, fairness-aware machine learning, and diverse multi-site training cohorts"
+    },
+    {
+      "mode": "Adversarial attacks and model inversion privacy risks",
+      "mitigation": "Differential privacy, secure aggregation, federated learning, and robust model hardening techniques"
+    },
+    {
+      "mode": "Alert fatigue from high false-positive rates",
+      "mitigation": "Threshold optimization, uncertainty-aware prediction, and human-AI collaborative decision-making frameworks"
+    }
+  ],
+  "hardware_requirements": {
+    "minimum": "Single GPU with 24GB VRAM (e.g., RTX 3090) for 2D image analysis and lightweight models; 80GB VRAM (A100) for production WSI inference at 40x magnification",
+    "recommended": "Multi-GPU nodes with NVIDIA H100 (80GB HBM3) or H200 (141GB HBM3e) for training; Blackwell B200 (192GB HBM3e) for large-scale foundation model training and WSI analysis without tiling; NVLink/NVSwitch interconnects for multi-GPU scaling",
+    "gpu_accelerated": true
+  },
+  "most_cited_papers": [
+    {
+      "title": "U-Net: Convolutional Networks for Biomedical Image Segmentation",
+      "authors": "Ronneberger, O., Fischer, P., Brox, T.",
+      "year": 2015,
+      "citations": 95000,
+      "doi": "10.1007/978-3-319-24574-4_28"
+    },
+    {
+      "title": "Deep Residual Learning for Image Recognition",
+      "authors": "He, K., Zhang, X., Ren, S., Sun, J.",
+      "year": 2016,
+      "citations": 200000,
+      "doi": "10.1109/CVPR.2016.90"
+    },
+    {
+      "title": "nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation",
+      "authors": "Isensee, F., Jaeger, P.F., Kohl, S.A.A., Petersen, J., Maier-Hein, K.H.",
+      "year": 2021,
+      "citations": 5000,
+      "doi": "10.1038/s41592-020-01008-z"
+    },
+    {
+      "title": "CheXNet: Radiologist-Level Pneumonia Detection on Chest X-Rays with Deep Learning",
+      "authors": "Rajpurkar, P. et al.",
+      "year": 2017,
+      "citations": 4500,
+      "doi": "10.48550/arXiv.1711.05225"
+    },
+    {
+      "title": "Deep learning for computational pathology on whole slide images",
+      "authors": "Campanella, G. et al.",
+      "year": 2019,
+      "citations": 2500,
+      "doi": "10.1038/s41591-019-0508-1"
+    },
+    {
+      "title": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+      "authors": "Dosovitskiy, A. et al.",
+      "year": 2021,
+      "citations": 110000,
+      "doi": "10.48550/arXiv.2010.11929"
+    },
+    {
+      "title": "Denoising Diffusion Probabilistic Models",
+      "authors": "Ho, J., Jain, A., Abbeel, P.",
+      "year": 2020,
+      "citations": 35000,
+      "doi": "10.48550/arXiv.2006.11239"
+    }
+  ],
+  "oss_projects": [
+    {
+      "name": "MONAI",
+      "url": "https://github.com/Project-MONAI/MONAI",
+      "stars": 8711,
+      "license": "Apache-2.0",
+      "maturity": "production"
+    },
+    {
+      "name": "nnU-Net",
+      "url": "https://github.com/MIC-DKFZ/nnUNet",
+      "stars": 5200,
+      "license": "Apache-2.0",
+      "maturity": "production"
+    },
+    {
+      "name": "HistoFL",
+      "url": "https://github.com/mahmoodlab/HistoFL",
+      "stars": 350,
+      "license": "MIT",
+      "maturity": "research"
+    },
+    {
+      "name": "FEAL (Federated Evidential Active Learning)",
+      "url": "https://github.com/JiayiChen815/FEAL",
+      "stars": 120,
+      "license": "MIT",
+      "maturity": "research"
+    },
+    {
+      "name": "TANGLE (Transcriptomics-Guided Slide Representation Learning)",
+      "url": "https://github.com/mahmoodlab/TANGLE",
+      "stars": 280,
+      "license": "MIT",
+      "maturity": "research"
+    }
+  ],
+  "scalability_limits": [
+    {
+      "limit": "Whole slide image memory footprint",
+      "threshold": "Single WSI at 40x magnification: ~100,000 x 100,000 pixels (~2GB compressed, ~30GB uncompressed); requires 80GB+ VRAM for production inference without tiling"
+    },
+    {
+      "limit": "Diffusion model training compute",
+      "threshold": "3D medical diffusion models require hundreds of GPU-hours even for modest datasets; single sample requires hundreds of sequential U-Net evaluations"
+    },
+    {
+      "limit": "Federated learning communication overhead",
+      "threshold": "Communication rounds scale with number of clients; non-IID data requires more rounds for convergence; differential privacy adds noise that slows convergence"
+    },
+    {
+      "limit": "Transformer attention complexity",
+      "threshold": "Quadratic scaling O(n²) with image resolution limits application to gigapixel WSIs and high-resolution 3D volumes; State Space Models (Mamba) offer linear scaling alternative"
+    },
+    {
+      "limit": "Foundation model pretraining data requirements",
+      "threshold": "3D radiology foundation models require millions of volumes (nnFoundation: 2.1M volumes from 125 datasets); pathology foundation models require 300K+ WSIs (TITAN: 335,645 WSIs)"
+    },
+    {
+      "limit": "Real-time inference latency",
+      "threshold": "Acute care AI triage requires <5 minutes for stroke CT, <10 minutes for PE detection, <2 minutes for chest X-ray preliminary read; cloud offloading cannot reliably guarantee these SLAs"
+    }
+  ],
+  "security_governance": {
+    "regulations": [
+      "FDA 510(k) Premarket Notification - 97% of AI/ML medical devices cleared via this pathway; 168 ML-enabled devices approved in 2024 alone",
+      "FDA De Novo Pathway - for novel devices without predicate; 9 devices (5.4%) in 2024",
+      "EU MDR 2017/745 - Medical Device Regulation; most AI diagnostic software classified as Class IIa or higher requiring Notified Body review",
+      "EU AI Act 2024/1689 - AI-enabled medical devices automatically classified as high-risk AI; full obligations apply from August 2028 for medical devices",
+      "HIPAA - Health Insurance Portability and Accountability Act for patient data protection in the US",
+      "GDPR - General Data Protection Regulation for health data in the EU",
+      "ISO 13485 - Quality management systems for medical devices",
+      "IEC 62304 - Medical device software lifecycle processes"
+    ],
+    "challenges": [
+      "Dual regulatory burden in EU: MDR + AI Act compliance required simultaneously",
+      "Predetermined Change Control Plans (PCCP) needed for adaptive AI models but not yet standardized",
+      "Notified Body shortage in EU causing 12-24 month review timelines",
+      "Post-market surveillance and real-world performance monitoring requirements",
+      "Data governance: training data must be relevant, representative, free of errors, and complete",
+      "Algorithmic transparency and human oversight requirements",
+      "Cybersecurity requirements for connected AI medical devices",
+      "Equity and bias assessment across demographic groups and skin tones"
+    ]
+  },
+  "cost_tradeoffs": [
+    {
+      "approach": "Cloud-based inference (e.g., GPT-4 for radiology report analysis)",
+      "cost": "$134 per report (13±4 seconds); ongoing operational expense",
+      "benefit": "No hardware investment; scalable compute on demand"
+    },
+    {
+      "approach": "On-premises GPU infrastructure (A100/H100)",
+      "cost": "$10,000-$30,000 per GPU; $100K+ for multi-GPU node; power and cooling",
+      "benefit": "Low latency for real-time triage; data sovereignty; no per-inference cost"
+    },
+    {
+      "approach": "Federated learning vs. centralized training",
+      "cost": "Higher communication overhead; complex infrastructure; slower convergence",
+      "benefit": "Privacy preservation; multi-site collaboration without data sharing; regulatory compliance"
+    },
+    {
+      "approach": "Foundation model fine-tuning vs. task-specific training",
+      "cost": "Pretraining requires millions of images and thousands of GPU-hours; fine-tuning is cheaper",
+      "benefit": "Superior generalization; few-shot learning capability; reduced annotation requirements"
+    },
+    {
+      "approach": "Differential privacy in federated learning",
+      "cost": "Privacy-accuracy tradeoff; noise injection degrades model performance",
+      "benefit": "Mathematical privacy guarantees; regulatory compliance; protection against model inversion attacks"
+    },
+    {
+      "approach": "Quantization (INT8/FP16) for edge deployment",
+      "cost": "Potential accuracy degradation; requires validation",
+      "benefit": "4x memory reduction; 2-4x speedup; enables deployment on edge devices and mobile NPUs"
+    }
+  ]
+}

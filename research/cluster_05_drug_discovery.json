@@ -1,0 +1,359 @@
+{
+  "cluster": "Drug Discovery & Computational Biology",
+  "bottlenecks": [
+    {
+      "description": "Molecular docking conformational search space grows combinatorially with ligand flexibility, interaction motifs, and binding-site geometry, making exhaustive evaluation intractable for large flexible molecules",
+      "severity": "high",
+      "evidence": "Agu et al. 2023; arxiv.org/abs/2508.18147 — 'The number of candidate poses grows combinatorially with ligand flexibility, interaction motifs and binding-site geometry, making exhaustive evaluation inefficient'"
+    },
+    {
+      "description": "Physics-based virtual screening of billion-compound libraries is computationally prohibitive: brute-force docking of 36B compounds would require ~3.6×10^8 CPU-hours (~$3.6M cloud cost, ~130 years on 320 cores)",
+      "severity": "high",
+      "evidence": "V-SYNTHES2, Nature Communications 2025 (PMC13332051) — 'brute-force docking of 36 billion compounds would require ~3.6×10^8 CPU-hours'"
+    },
+    {
+      "description": "AlphaFold-style structure prediction scales cubically with sequence length due to triangle attention in the Pairformer backbone; Boltz-1 requires >15 min for a single 2048-token sequence on A100 GPU",
+      "severity": "high",
+      "evidence": "Pairmixer (arxiv.org/html/2510.18870v2) — 'Boltz-1 requires over 15 minutes to process a single 2048-token sequence on an A100 GPU'; 'triangle attention requires attention operations, introducing substantial memory and runtime overhead'"
+    },
+    {
+      "description": "ADMET prediction remains a critical bottleneck: ~40% of preclinical candidate drugs fail due to insufficient ADMET profiles, and nearly 30% of marketed drugs are withdrawn due to unforeseen toxic reactions",
+      "severity": "high",
+      "evidence": "PMC12499773 — '~40% of preclinical candidate drugs fail due to insufficient ADMET profiles, while nearly 30% of marketed drugs are withdrawn due to unforeseen toxic reactions'"
+    },
+    {
+      "description": "Deep learning docking methods exhibit poor generalization to novel protein binding pockets, with regression models often failing to produce physically valid poses and most DL methods showing high steric tolerance",
+      "severity": "medium",
+      "evidence": "RSC Chem. Sci. 2025 (d5sc05395a) — 'significant challenges in generalization, particularly when encountering novel protein binding pockets'; 'regression models often fail to produce physically valid poses'"
+    },
+    {
+      "description": "Clinical trial failure rates remain ~90% from Phase 1 to BLA; AI-discovered drugs show 80-90% Phase I success but only ~40% Phase II success, comparable to historic averages",
+      "severity": "high",
+      "evidence": "Jayatunga et al. Drug Discov. Today 2024 (doi:10.1016/j.drudis.2024.104009) — 'In Phase II the success rate is ~40%'; npj Drug Discovery 2025 — 'nearly 95% failure rate between Phase 1 and BLA'"
+    },
+    {
+      "description": "Molecular dynamics simulations for binding free energy calculations are extremely expensive: FEP+ requires ~128.8 perturbations/day per DGX A100 system, limiting throughput in lead optimization",
+      "severity": "medium",
+      "evidence": "NVIDIA DGX Infrastructure Solution for Drug Discovery (WP-11016-001) — 'BACE-1 simulations have a maximum throughput of 128.8 perturbations/day per DGX'"
+    }
+  ],
+  "np_hard_problems": [
+    {
+      "problem": "Molecular Docking (Maximum Weighted Independent Set / Maximum Vertex-Weighted Clique)",
+      "complexity": "NP-hard — mapping pharmacophore interactions to graph vertices and finding the optimal compatible subset is provably intractable for large densely connected graphs",
+      "current_approaches": [
+        "Force-field-based stochastic search (AutoDock Vina, Glide SP)",
+        "Graph-based combinatorial optimization mapping to MWIS/MVWCP",
+        "Quantum annealing on neutral-atom QPUs (Rydberg blockade)",
+        "Deep learning pose prediction (diffusion models, regression architectures)",
+        "Hybrid physics-ML frameworks (RosettaVS, TerraBind)"
+      ],
+      "gaps": [
+        "Size mismatch between biologically relevant systems and NISQ quantum hardware capacity",
+        "Heuristic search provides no optimality guarantees",
+        "Scoring functions lack accuracy for entropy and induced-fit effects",
+        "DL methods show poor generalization to novel binding pockets"
+      ]
+    },
+    {
+      "problem": "Protein Sidechain Packing (Rotamer Assignment)",
+      "complexity": "NP-hard — selecting one rotamer per residue from a discrete library to minimize total pairwise-decomposable conformational energy is provably intractable (Pierce & Winfree, 2002)",
+      "current_approaches": [
+        "Dead-end elimination (DEE)",
+        "Integer linear programming",
+        "Monte Carlo stochastic search (Rosetta packer)",
+        "Quantum Approximate Optimization Algorithm (QAOA) with QUBO encoding",
+        "AlphaFold2 backbone prediction + refinement"
+      ],
+      "gaps": [
+        "AlphaFold2 sidechain positioning deviates from experimental data by up to 20%",
+        "Rosetta packer is heuristic with no global optimality guarantee",
+        "QAOA shot scaling remains below classical exhaustive search rates at moderate flexibility",
+        "Classical preprocessing does not significantly reduce low-energy basins"
+      ]
+    },
+    {
+      "problem": "Protein Structure Alignment (Optimal RMSD under Correspondence)",
+      "complexity": "NP-hard — reducible to the largest common point set (LCP) problem or 3D substructure isomorphism, both proven NP-complete (Goldman et al., 1999)",
+      "current_approaches": [
+        "Dynamic programming (CE, Dali)",
+        "Spectral methods (GESAMT)",
+        "Heuristic search (TM-align)",
+        "Contact map overlap maximization"
+      ],
+      "gaps": [
+        "Exhaustive search is O(n!·m!) for proteins of length n, m",
+        "Continuous 6-DOF search space cannot be discretely sampled without missing global optimum",
+        "Scoring functions are non-convex with many local minima",
+        "Flexible alignment with rotamers is NP-complete to NP-hard"
+      ]
+    },
+    {
+      "problem": "Protein Threading (3D Fold Recognition)",
+      "complexity": "NP-complete for detailed models (Lathrop, 1994) — aligning sequence to structural template with pairwise interactions is intractable",
+      "current_approaches": [
+        "Dynamic programming over frozen environments",
+        "Graph-based algorithms",
+        "Deep learning fold recognition"
+      ],
+      "gaps": [
+        "Simplified models required for tractability",
+        "Energy function accuracy degrades with sequence length",
+        "Cannot guarantee optimal fold assignment"
+      ]
+    },
+    {
+      "problem": "Flexible Ligand-Flexible Receptor Docking",
+      "complexity": "NP-hard — even simplified models with both ligand and receptor flexibility are intractable (Fraenkel, 1993)",
+      "current_approaches": [
+        "FFT correlation methods",
+        "Monte Carlo simulation",
+        "Genetic algorithms",
+        "Incremental construction (DOCK, FlexX)"
+      ],
+      "gaps": [
+        "Induced-fit effects poorly captured by rigid-receptor approximations",
+        "Ensemble docking multiplies computational cost",
+        "No polynomial-time algorithm exists for guaranteed optimal solution"
+      ]
+    }
+  ],
+  "sota_approaches": [
+    {
+      "name": "AlphaFold3",
+      "description": "Diffusion-based biomolecular structure prediction modeling protein-ligand, protein-nucleic acid, and protein-protein interactions with atomic accuracy; transforms structure-based drug design",
+      "citation": "Abramson et al., Nature 630(8016):493-500, 2024. doi:10.1038/s41586-024-07487-w"
+    },
+    {
+      "name": "Boltz-1 / Boltz-2",
+      "description": "Open-source biomolecular structure prediction foundation model achieving AlphaFold3-competitive accuracy; Boltz-2 ranks highest among ML-based binding affinity prediction tools in benchmarks",
+      "citation": "Wohlwend et al., 2024; benchmarked in arxiv.org/abs/2605.04265 — 'Boltz-2 and DrugFormDTA ranked highest overall among ML-based approaches'"
+    },
+    {
+      "name": "TerraBind",
+      "description": "Foundation model for protein-ligand structure and binding affinity prediction using coarse pocket-level representation (Cβ + heavy atoms only); 26× faster inference than SOTA with ~20% improved affinity accuracy",
+      "citation": "arxiv.org/abs/2602.07735 — '26-fold faster inference than state-of-the-art methods while improving affinity prediction accuracy by ~20%'"
+    },
+    {
+      "name": "RosettaVS / OpenVS",
+      "description": "AI-accelerated physics-based virtual screening platform with active learning triage; screened 5.5B Enamine-REAL library in <7 days on 3000 CPUs + 1 RTX2080 GPU, discovering single-digit µM binders",
+      "citation": "Nature Communications 15, 2024 (doi:10.1038/s41467-024-52061-7) — 'Screening in both cases is completed in less than seven days'"
+    },
+    {
+      "name": "V-SYNTHES2",
+      "description": "Structure-based virtual screening of 36B Enamine REAL Space using iterative modular algorithm with CapSelect; scales linearly with synthons rather than total compounds, achieving >10,000-fold computational reduction",
+      "citation": "Nature Communications 2025 (PMC13332051) — 'V-SYNTHES2 reduces the required docking to ≈3.8 million compounds (~38,400 CPU-hours; ≈$380)'"
+    },
+    {
+      "name": "Pairmixer",
+      "description": "Streamlined alternative to AlphaFold3 Pairformer backbone eliminating triangle attention while preserving geometric reasoning; matches SOTA accuracy with 34% fewer training GPU-days and up to 4× faster inference on long sequences",
+      "citation": "arxiv.org/html/2510.18870v2 — 'Pairmixer consistently matches the performance of Pairformer backbone while training in 34% fewer GPU-days'"
+    },
+    {
+      "name": "SWDOCKP2",
+      "description": "Performance-portable virtual screening framework achieving 1.9 trillion ligand-receptor pairs daily on Sunway OceanLight supercomputer (39M cores) — 10× faster than prior SOTA",
+      "citation": "ACM SC25 (doi:10.1145/3712285.3759833) — '1.9 trillion ligand-receptor pairs daily across eight targets... 10× faster than prior state-of-the-art'"
+    },
+    {
+      "name": "Diffusion-based Docking (FlowDock, etc.)",
+      "description": "Generative diffusion models for molecular docking pose prediction achieving superior pose accuracy over traditional methods, though with challenges in physical plausibility and steric tolerance",
+      "citation": "RSC Chem. Sci. 2025 (d5sc05395a) — 'generative diffusion models achieve superior pose accuracy, while hybrid methods offer the best balance'"
+    }
+  ],
+  "failure_modes": [
+    {
+      "mode": "ADMET attrition: ~40% of preclinical candidates fail due to poor pharmacokinetics or toxicity, often discovered late in development",
+      "mitigation": "Early integration of ML-based ADMET prediction (GNNs, multitask models) in hit-to-lead optimization; use of self-supervised pretraining on large compound datasets (HelixADMET)"
+    },
+    {
+      "mode": "Clinical trial failure: ~90% failure rate from Phase 1 to BLA; AI-discovered drugs show ~40% Phase II success (proof-of-concept), comparable to traditional drugs",
+      "mitigation": "Focus on validated targets with clinical evidence; improve disease modeling and biomarker stratification; AI-driven clinical trial optimization"
+    },
+    {
+      "mode": "DL docking generalization failure: deep learning docking methods perform poorly on novel protein binding pockets not represented in training data",
+      "mitigation": "Hybrid physics-ML approaches; ensemble docking with receptor flexibility; active learning to iteratively expand training coverage"
+    },
+    {
+      "mode": "Scoring function inaccuracy: empirical and force-field scoring functions fail to capture entropy, induced-fit, and solvent effects, leading to false positives/negatives",
+      "mitigation": "Free energy perturbation (FEP+) calculations for lead optimization; MM-PBSA/GBSA rescoring; ML-based affinity prediction (Boltz-2, DrugFormDTA)"
+    },
+    {
+      "mode": "AlphaFold hallucination in disordered regions: ~30-40% of residues have low pLDDT confidence; predictions fail for IDRs, ligand-bound states, and PTMs",
+      "mitigation": "Orthogonal experimental validation (cryo-EM, X-ray); ensemble AF models; integration with MD simulations for dynamic refinement"
+    },
+    {
+      "mode": "AI-designed drugs acting on established targets: most AI-discovered drugs target previously validated mechanisms, limiting therapeutic novelty",
+      "mitigation": "Invest in novel target identification via multi-omics AI; combine generative design with target deconvolution; focus on underserved indications"
+    }
+  ],
+  "hardware_requirements": {
+    "minimum": "Single NVIDIA A100 40GB GPU for AlphaFold inference and DL-based docking; 32-64 CPU cores for traditional docking; 128GB RAM for large library processing",
+    "recommended": "NVIDIA DGX A100 (8×A100 80GB) or DGX H100 (8×H100 80GB) for structure prediction at scale; 3000+ CPU cluster with GPU acceleration for billion-compound virtual screening; NVLink/NVSwitch interconnect for multi-GPU training",
+    "gpu_accelerated": true
+  },
+  "most_cited_papers": [
+    {
+      "title": "Highly accurate protein structure prediction with AlphaFold",
+      "authors": "Jumper, J., Evans, R., Pritzel, A., et al.",
+      "year": 2021,
+      "citations": 120000,
+      "doi": "10.1038/s41586-021-03819-2"
+    },
+    {
+      "title": "Accurate structure prediction of biomolecular interactions with AlphaFold 3",
+      "authors": "Abramson, J., Adler, J., Dunger, J., et al.",
+      "year": 2024,
+      "citations": 15000,
+      "doi": "10.1038/s41586-024-07487-w"
+    },
+    {
+      "title": "AutoDock Vina: improving the speed and accuracy of docking with a new scoring function, efficient optimization and multithreading",
+      "authors": "Trott, O. & Olson, A.J.",
+      "year": 2010,
+      "citations": 35000,
+      "doi": "10.1002/jcc.21334"
+    },
+    {
+      "title": "The Protein Data Bank",
+      "authors": "Berman, H.M., Westbrook, J., Feng, Z., et al.",
+      "year": 2000,
+      "citations": 95000,
+      "doi": "10.1093/nar/28.1.235"
+    },
+    {
+      "title": "GROMACS: fast, flexible, and free",
+      "authors": "Van Der Spoel, D., Lindahl, E., Hess, B., et al.",
+      "year": 2005,
+      "citations": 45000,
+      "doi": "10.1002/jcc.20291"
+    },
+    {
+      "title": "RDKit: Open-source cheminformatics",
+      "authors": "Landrum, G.",
+      "year": 2006,
+      "citations": 8000,
+      "doi": "10.1021/ci050413p"
+    }
+  ],
+  "oss_projects": [
+    {
+      "name": "RDKit",
+      "url": "https://github.com/rdkit/rdkit",
+      "stars": 2500,
+      "license": "BSD-3-Clause",
+      "maturity": "production — de facto cheminformatics toolkit, 20+ years active development, 200+ contributors"
+    },
+    {
+      "name": "AutoDock Vina",
+      "url": "https://github.com/ccsb-scripps/AutoDock-Vina",
+      "stars": 850,
+      "license": "Apache-2.0",
+      "maturity": "production — widely adopted docking engine, v1.2.7 (Feb 2026), active maintenance"
+    },
+    {
+      "name": "GROMACS",
+      "url": "https://github.com/gromacs/gromacs",
+      "stars": 1500,
+      "license": "LGPL-2.1",
+      "maturity": "production — gold-standard MD simulation package, v2025.4 (Nov 2025), 100+ contributors"
+    },
+    {
+      "name": "DeepChem",
+      "url": "https://github.com/deepchem/deepchem",
+      "stars": 5500,
+      "license": "MIT",
+      "maturity": "production — comprehensive deep learning for drug discovery, active community"
+    },
+    {
+      "name": "OpenVS",
+      "url": "https://github.com/galaxyproject/openvs",
+      "stars": 150,
+      "license": "MIT",
+      "maturity": "research — AI-accelerated virtual screening platform from RosettaVS publication"
+    },
+    {
+      "name": "Boltz-1",
+      "url": "https://github.com/jwohlwend/boltz",
+      "stars": 1200,
+      "license": "MIT",
+      "maturity": "research — open-source AlphaFold3-competitive structure prediction, active development"
+    }
+  ],
+  "scalability_limits": [
+    {
+      "limit": "Brute-force physics-based docking of full chemical libraries",
+      "threshold": "36 billion compounds → ~3.6×10^8 CPU-hours (~$3.6M cloud, ~130 years on 320 cores); requires hierarchical/funnel approaches (V-SYNTHES2: >10,000× reduction)"
+    },
+    {
+      "limit": "AlphaFold3-style inference on long sequences",
+      "threshold": "2048 tokens → >15 min on A100 GPU (Boltz-1); Pairmixer reduces to ~250s but still O(n³) scaling with sequence length"
+    },
+    {
+      "limit": "Molecular dynamics simulation throughput",
+      "threshold": "96k atoms → 3,700 ns/day on 1 DGX A100; 150,000 ns/day on 10 DGX A100; FEP+ limited to ~128.8 perturbations/day per DGX"
+    },
+    {
+      "limit": "Virtual screening throughput (GPU-accelerated)",
+      "threshold": "1.9 trillion ligand-receptor pairs/day on 39M-core Sunway OceanLight (SWDOCKP2); ~36s/compound on single CPU core for physics-based docking"
+    },
+    {
+      "limit": "Quantum docking on NISQ hardware",
+      "threshold": "540-node MWIS problem solved on neutral-atom QPU emulator; biologically relevant systems require divide-and-conquer decomposition due to limited qubit count"
+    },
+    {
+      "limit": "DL docking training data coverage",
+      "threshold": "PDB contains ~200K experimental structures; novel binding pockets and underrepresented protein families limit generalization of learned scoring functions"
+    }
+  ],
+  "security_governance": {
+    "regulations": [
+      "FDA Draft Guidance (Jan 2025): 'Considerations for the Use of Artificial Intelligence to Support Regulatory Decision-Making for Drug and Biological Products' — covers AI in nonclinical, clinical, postmarketing, and manufacturing phases",
+      "Executive Order 14110 on Safe, Secure, and Trustworthy Development and Use of AI — 150 requirements including 8 for HHS",
+      "CDER AI Council established 2024 for oversight and coordination of AI in drug development",
+      "21 CFR Parts 50, 56, 812 — human subject protections and investigational device exemptions for AI clinical investigations",
+      "45 CFR Part 46 (Common Rule) — proposed amendments for AI and digital health research",
+      "Proposed FDA-led AI regulatory sandboxes for biopharmaceutical applications with multi-stakeholder governance"
+    ],
+    "challenges": [
+      "Model validation: lack of standardized benchmarks for AI/ML models in regulatory decision-making",
+      "Data quality and representativeness: training data biases leading to inequitable drug efficacy across populations",
+      "Explainability: black-box deep learning models (diffusion-based docking, structure prediction) lack interpretability for regulatory review",
+      "Intellectual property: AI-assisted invention patentability and inventorship criteria unclear (USPTO MPEP update needed)",
+      "Data privacy: patient data in AI-driven pharmacovigilance and real-world evidence requires HIPAA/GDPR compliance",
+      "Transparency: level of documentation required for AI model development, performance monitoring, and validation",
+      "Harmonization: global alignment of AI in drug discovery regulations across FDA, EMA, PMDA"
+    ]
+  },
+  "cost_tradeoffs": [
+    {
+      "approach": "Physics-based docking (AutoDock Vina, Glide)",
+      "cost": "~$0.01/CPU-hour; ~36s/compound on single core; $3.6M for 36B library brute-force",
+      "benefit": "Physically interpretable, no training data required, well-validated scoring functions"
+    },
+    {
+      "approach": "ML-accelerated hierarchical screening (V-SYNTHES2, OpenVS)",
+      "cost": "~$380 for 36B library (10,000× reduction); requires GPU cluster for active learning model",
+      "benefit": "Giga-scale screening feasible in 48h; maintains physics-based accuracy for final ranking"
+    },
+    {
+      "approach": "Deep learning docking (diffusion models, TerraBind)",
+      "cost": "High training cost (GPU-days); inference 26× faster than physics-based (TerraBind)",
+      "benefit": "Superior pose accuracy; bypasses expensive all-atom diffusion; enables large-scale screening"
+    },
+    {
+      "approach": "Free Energy Perturbation (FEP+)",
+      "cost": "~128.8 perturbations/day per DGX A100; expensive but experimental accuracy",
+      "benefit": "Gold standard for lead optimization; reduces late-stage attrition from poor binding affinity"
+    },
+    {
+      "approach": "Quantum docking (neutral-atom QPU)",
+      "cost": "NISQ hardware limited to ~500-node problems; requires divide-and-conquer decomposition",
+      "benefit": "Potential for provably optimal solutions on MWIS; natural physical analogue via Rydberg blockade"
+    },
+    {
+      "approach": "AlphaFold3-style structure prediction",
+      "cost": ">15 min per 2048-token sequence on A100; Pairmixer reduces to ~250s with 34% fewer training GPU-days",
+      "benefit": "Near-experimental accuracy without costly crystallography/cryo-EM; enables structure-based design for previously intractable targets"
+    }
+  ]
+}
