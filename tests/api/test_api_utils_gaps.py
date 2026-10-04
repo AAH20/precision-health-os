@@ -114,7 +114,11 @@ class TestHashSensitive:
         assert hash1 != hash2
 
     def test_hash_sensitive_across_processes(self) -> None:
-        """Verify hash_sensitive produces same result in subprocess."""
+        """Verify hash_sensitive produces the same result in a subprocess.
+
+        Uses the installed package (no cwd assumption) so it passes on any
+        machine, not just the author's checkout.
+        """
         code = (
             "from precision_health_os.utils import hash_sensitive; "
             "print(hash_sensitive('cross-process-test'))"
@@ -123,7 +127,7 @@ class TestHashSensitive:
             [sys.executable, "-c", code],
             capture_output=True,
             text=True,
-            cwd="/home/aah/Downloads/2000 workflows/projects/precision-health-os",
+            check=True,
         )
         subprocess_hash = result.stdout.strip()
         local_hash = hash_sensitive("cross-process-test")
