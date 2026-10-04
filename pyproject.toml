@@ -152,7 +152,10 @@ markers = [
 
 [tool.bandit]
 exclude_dirs = ["tests"]
-skips = ["B101"]  # assert used in non-test code for invariants
+# B101: assert used for internal invariants outside tests.
+# B104: the CLI binds 0.0.0.0 by default; the app is containerised and the
+#       listen address is operator-controlled via --host.
+skips = ["B101", "B104"]
 
 [tool.coverage.run]
 source = ["src/precision_health_os"]

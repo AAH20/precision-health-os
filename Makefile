@@ -19,7 +19,7 @@ format: ## Run ruff formatter
 	ruff format src tests
 
 security: ## Run bandit security scan
-	bandit -r src -ll
+	bandit -r src -ll -c pyproject.toml
 
 typecheck: ## Run mypy type checker
 	mypy src
