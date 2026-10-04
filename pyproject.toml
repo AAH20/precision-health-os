@@ -168,6 +168,6 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
-# Ratchet: the suite currently sits at 99%. Keep the gate just below so a
-# genuine regression fails CI while normal churn does not.
-fail_under = 95
+# Ratchet: the suite sits at 98.57%. Keep the gate just below so a genuine
+# regression fails CI while normal churn does not.
+fail_under = 97

@@ -26,7 +26,7 @@ api = PrecisionHealthAPI()
 
 @app.command()
 def serve(
-    host: str = typer.Option("0.0.0.0", "--host", help="Bind host"),
+    host: str = typer.Option("0.0.0.0", "--host", help="Bind host"),  # nosec B104 - intentional for containerized deployment
     port: int = typer.Option(8000, "--port", help="Bind port"),
 ) -> None:
     """Start the Precision Health OS server."""

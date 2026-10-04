@@ -117,17 +117,16 @@ class TestAcknowledgeAlertActuallyAcknowledges:
         assert api.acknowledge_alert("does-not-exist", "dr_smith") is False
 
     def test_acknowledge_is_idempotent(self) -> None:
-        """The state change is idempotent; every attempt is still audited.
+        """Re-acknowledging is idempotent and does not fabricate audit events.
 
-        Re-acknowledging must not error and must not un-acknowledge the alert.
-        Both calls are recorded, because the audit trail logs actions taken,
-        not state transitions.
+        The audit event is recorded only on the transition, so a second
+        acknowledge call returns True but does not log a duplicate event.
         """
         api, alert_id = self._api_with_active_alert()
         assert api.acknowledge_alert(alert_id, "dr_smith") is True
         assert api.acknowledge_alert(alert_id, "dr_smith") is True
         assert api.get_active_alerts(patient_id="p1") == []
-        assert len(api.audit.get_events(user_id="dr_smith")) == 2
+        assert len(api.audit.get_events(user_id="dr_smith")) == 1
 
 
 class TestAPIAuditTrailIntegrity:

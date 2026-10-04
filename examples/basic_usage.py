@@ -1,10 +1,14 @@
-# Examples for Precision Health OS
-# Basic Usage
+"""Basic usage examples for Precision Health OS."""
 
+from __future__ import annotations
+
+import os
 from datetime import datetime
 
 from precision_health_os.api import PrecisionHealthAPI
 from precision_health_os.models import Patient, VitalSigns
+from precision_health_os.optimization import Location, VRPTimeWindowsSolver
+from precision_health_os.security import AuditTrail, EncryptionService
 
 api = PrecisionHealthAPI()
 
@@ -29,8 +33,6 @@ vitals = VitalSigns(
 alerts = api.ingest_vitals(vitals)
 
 # Optimization Example
-from precision_health_os.optimization import VRPTimeWindowsSolver, Location
-
 depot = Location(id="hospital", x=0, y=0)
 locations = [
     Location(id="p1", x=3, y=4, demand=1, service_time=30),
@@ -40,10 +42,6 @@ solver = VRPTimeWindowsSolver(depot, vehicle_capacity=10)
 routes = solver.solve(locations)
 
 # Security Example
-import os
-
-from precision_health_os.security import AuditTrail, EncryptionService
-
 key = os.urandom(32)
 enc = EncryptionService(key)
 ciphertext = enc.encrypt("sensitive data")

@@ -64,14 +64,18 @@ class PrecisionHealthAPI:
         The audit event is recorded only on the transition, so re-acknowledging
         does not fabricate a second clinical action in the trail.
         """
+        # Check if the alert is in the active set BEFORE acknowledging.
+        # If it's not active, it was already acknowledged (or doesn't exist).
+        was_active = any(a.id == alert_id for a in self._alert_manager.get_active_alerts())
+
         alert = self._alert_manager.acknowledge(alert_id, user_id)
         if alert is None:
             return False
         if not alert.acknowledged:
-            # AlertManager only flips the flag on the first call; if it is
-            # still unset the alert could not be acknowledged.
             return False
-        self.audit.log(user_id, "acknowledge_alert", "alert", alert_id)
+        # Only log on the actual transition, not on idempotent re-acks
+        if was_active:
+            self.audit.log(user_id, "acknowledge_alert", "alert", alert_id)
         return True
 
     def check_permission(self, user_id: str, permission: str) -> bool:

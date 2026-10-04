@@ -69,16 +69,16 @@ def bench_tsp_quality() -> dict[str, float]:
     measured on an explicit sample of n=6 instances and divided by the number
     of instances actually solved — not by an assumed count.
     """
-    random.seed(1234)
+    random.seed(1234)  # nosec B311 - benchmark data generation, not security
     solver = TSPSolver()
 
     # --- monotonicity vs an independent nearest-neighbour baseline ---
     trials = 150
     worse = 0
     for _ in range(trials):
-        n = random.randint(6, 10)
+        n = random.randint(6, 10)  # nosec B311 - benchmark data generation, not security
         pts = [
-            Location(id=str(i), x=random.uniform(0, 100), y=random.uniform(0, 100))
+            Location(id=str(i), x=random.uniform(0, 100), y=random.uniform(0, 100))  # nosec B311 - benchmark data generation, not security
             for i in range(n)
         ]
         got = [pts.index(loc) for loc in solver.solve(pts).locations]
@@ -93,7 +93,7 @@ def bench_tsp_quality() -> dict[str, float]:
     solved = 0
     for _ in range(optimal_trials):
         pts = [
-            Location(id=str(i), x=random.uniform(0, 100), y=random.uniform(0, 100))
+            Location(id=str(i), x=random.uniform(0, 100), y=random.uniform(0, 100))  # nosec B311 - benchmark data generation, not security
             for i in range(6)
         ]
         got = [pts.index(loc) for loc in solver.solve(pts).locations]
@@ -112,19 +112,19 @@ def bench_tsp_quality() -> dict[str, float]:
 
 def bench_knapsack_optimality() -> dict[str, float]:
     """Knapsack DP must match brute-force optimum exactly."""
-    random.seed(99)
+    random.seed(99)  # nosec B311 - benchmark data generation, not security
     matches = 0
     trials = 60
 
     for _ in range(trials):
-        capacity = random.randint(20, 60)
+        capacity = random.randint(20, 60)  # nosec B311 - benchmark data generation, not security
         items = [
             {
                 "name": f"i{k}",
-                "value": random.randint(10, 100),
-                "weight": random.randint(5, 30),
+                "value": random.randint(10, 100),  # nosec B311 - benchmark data generation, not security
+                "weight": random.randint(5, 30),  # nosec B311 - benchmark data generation, not security
             }
-            for k in range(random.randint(3, 8))
+            for k in range(random.randint(3, 8))  # nosec B311 - benchmark data generation, not security
         ]
         got = sum(it["value"] for it in KnapsackSolver(float(capacity)).solve(items))
         best = max(
@@ -144,7 +144,7 @@ def bench_knapsack_optimality() -> dict[str, float]:
 
 def bench_vrp_feasibility() -> dict[str, float]:
     """VRP must serve every node and never breach vehicle capacity."""
-    random.seed(7)
+    random.seed(7)  # nosec B311 - benchmark data generation, not security
     served_all = 0
     capacity_ok = 0
     trials = 40
@@ -154,14 +154,14 @@ def bench_vrp_feasibility() -> dict[str, float]:
         locs = [
             Location(
                 id=f"l{i}",
-                x=random.uniform(-20, 20),
-                y=random.uniform(-20, 20),
-                demand=random.randint(5, 40),
+                x=random.uniform(-20, 20),  # nosec B311 - benchmark data generation, not security
+                y=random.uniform(-20, 20),  # nosec B311 - benchmark data generation, not security
+                demand=random.randint(5, 40),  # nosec B311 - benchmark data generation, not security
                 service_time=5,
                 ready_time=0,
                 due_time=1000,
             )
-            for i in range(random.randint(4, 12))
+            for i in range(random.randint(4, 12))  # nosec B311 - benchmark data generation, not security
         ]
         routes = VRPTimeWindowsSolver(depot, vehicle_capacity=100).solve(locs)
         served = sum(len(r.locations) for r in routes)
@@ -208,8 +208,8 @@ def bench_anomaly_detection() -> dict[str, float]:
 
     true_neg = 0
     for _ in range(20):
-        random.seed(_)
-        series = [70 + random.uniform(-3, 3) for _ in range(9)]
+        random.seed(_)  # nosec B311 - benchmark data generation, not security
+        series = [70 + random.uniform(-3, 3) for _ in range(9)]  # nosec B311 - benchmark data generation, not security
         if not any(r.is_anomaly for r in detector.detect_ensemble(series)):
             true_neg += 1
 
@@ -221,9 +221,10 @@ def bench_anomaly_detection() -> dict[str, float]:
 
 def bench_solver_latency() -> dict[str, float]:
     """Solvers must stay well inside an interactive latency budget."""
-    random.seed(5)
+    random.seed(5)  # nosec B311 - benchmark data generation, not security
     pts = [
-        Location(id=str(i), x=random.uniform(0, 100), y=random.uniform(0, 100)) for i in range(25)
+        Location(id=str(i), x=random.uniform(0, 100), y=random.uniform(0, 100))
+        for i in range(25)  # nosec B311 - benchmark data generation, not security
     ]
 
     start = time.perf_counter()
@@ -234,8 +235,8 @@ def bench_solver_latency() -> dict[str, float]:
     locs = [
         Location(
             id=f"l{i}",
-            x=random.uniform(-50, 50),
-            y=random.uniform(-50, 50),
+            x=random.uniform(-50, 50),  # nosec B311 - benchmark data generation, not security
+            y=random.uniform(-50, 50),  # nosec B311 - benchmark data generation, not security
             demand=10,
             service_time=5,
             ready_time=0,

@@ -193,8 +193,12 @@ class EvolutionTracker:
         self._history.append({"generation": generation, "score": float(score)})
 
     def history(self) -> list[dict[str, Any]]:
-        """Return the recorded history in insertion order."""
-        return list(self._history)
+        """Return the recorded history in insertion order.
+
+        Returns a deep copy so callers cannot corrupt internal state by
+        mutating the returned entries.
+        """
+        return [dict(entry) for entry in self._history]
 
     def best_generation(self) -> int | None:
         """Return the generation with the highest score, or None if empty."""
