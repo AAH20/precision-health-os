@@ -189,10 +189,16 @@ class PharmacogenomicScorer:
     }
 
     def score_drug(self, gene: str, genotype: str, drug: str) -> PharmacogenomicGuideline | None:
-        """Score drug-gene interaction."""
+        """Score a drug-gene interaction for a specific genotype.
+
+        Matches on all three of gene, genotype, and drug. Matching on gene and
+        drug alone would return the first row in the table regardless of the
+        patient's actual alleles — e.g. reporting "Standard dosing" for a
+        CYP2D6 poor metabolizer (*4/*4) on codeine.
+        """
         guidelines = self.CPIC_GUIDELINES.get(gene, [])
         for guideline in guidelines:
-            if guideline.drug.lower() == drug.lower():
+            if guideline.drug.lower() == drug.lower() and guideline.allele == genotype:
                 return guideline
         return None
 

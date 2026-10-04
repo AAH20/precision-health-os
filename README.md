@@ -5,7 +5,7 @@
 [![CI](https://github.com/AAH20/precision-health-os/actions/workflows/ci.yml/badge.svg)](https://github.com/AAH20/precision-health-os/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-143%20passing-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/tests-160%20passing-brightgreen.svg)](#testing)
 [![Ruff](https://img.shields.io/badge/lint-ruff%20clean-brightgreen.svg)](https://github.com/astral-sh/ruff)
 [![Bandit](https://img.shields.io/badge/security-bandit%20clean-brightgreen.svg)](https://bandit.readthedocs.io/)
 
@@ -729,7 +729,7 @@ Full sizing guidance: [`docs/onboarding.md`](docs/onboarding.md)
 ## Testing
 
 ```bash
-pytest                                    # Full suite (143 tests)
+pytest                                    # Full suite (160 tests)
 pytest --cov=src/precision_health_os      # With coverage
 pytest -n auto                            # Parallel execution
 pytest -m "not slow"                      # Skip slow tests
@@ -743,14 +743,14 @@ pytest -m "not slow"                      # Skip slow tests
 | `security` | 17 | Encryption, key rotation, audit chain, RBAC, HIPAA |
 | `models` | 16 | Pydantic validation, range checks, enums |
 | `optimization` | 15 | VRP, TSP, knapsack, bipartite matching |
-| `iot` | 14 | Pipeline, z-score/IQR/EWMA/ensemble detection |
+| `iot` | 23 | Pipeline, z-score/IQR/EWMA/ensemble detection |
 | `clinical` | 13 | CDSS rules, alert dedup, pathway optimization |
-| `genomics` | 11 | Variant calling, CPIC scoring, risk prediction |
+| `genomics` | 19 | Variant calling, genotype-aware CPIC scoring, risk prediction |
 | `integration` | 11 | FHIR conversion, HL7 parsing, event bus |
 | `ml` | 10 | Disease risk, drug response, image analysis |
 | `drug_discovery` | 8 | Docking, ADMET, trial matching |
 | `api` | 7 | Patient registration, alert flow, permissions |
-| | **143** | |
+| | **160** | |
 
 ---
 
@@ -786,7 +786,7 @@ precision-health-os/
 │   ├── security/           # HIPAA, encryption, audit, RBAC
 │   ├── utils/              # Shared helpers
 │   └── cli.py              # Typer CLI
-├── tests/                  # 143 tests, mirrors src/
+├── tests/                  # 160 tests, mirrors src/
 ├── research/               # 10 cluster JSONs + consolidated
 ├── architecture/           # 7 Mermaid diagram files
 ├── docs/                   # Onboarding & sizing

@@ -148,7 +148,13 @@ class AnomalyDetector:
     def detect_ewma(
         self, values: list[float], alpha: float = 0.3, threshold: float = 3.0
     ) -> list[AnomalyResult]:
-        """Exponentially Weighted Moving Average anomaly detection."""
+        """Exponentially Weighted Moving Average anomaly detection.
+
+        Each point is scored against the EWMA and variance estimated from
+        *prior* observations only. Updating the variance with the current
+        point's own deviation would let a large spike inflate its own
+        denominator and escape detection.
+        """
         if len(values) < 3:
             return [AnomalyResult(False, 0.0, "ewma") for _ in values]
 
@@ -157,12 +163,11 @@ class AnomalyDetector:
         results = []
 
         for v in values:
-            diff = v - ewma
-            ewma = alpha * v + (1 - alpha) * ewma
-            ewma_var = alpha * diff**2 + (1 - alpha) * ewma_var
+            # Score against the model fitted on prior points.
             ewma_std = ewma_var**0.5 if ewma_var > 0 else 0
-
+            diff = v - ewma
             score = abs(diff) / ewma_std if ewma_std > 0 else 0
+
             results.append(
                 AnomalyResult(
                     is_anomaly=score > threshold,
@@ -171,6 +176,11 @@ class AnomalyDetector:
                     details={"ewma": ewma, "ewma_std": ewma_std},
                 )
             )
+
+            # Then fold this observation into the model for the next point.
+            ewma = alpha * v + (1 - alpha) * ewma
+            ewma_var = alpha * diff**2 + (1 - alpha) * ewma_var
+
         return results
 
     def detect_ensemble(self, values: list[float]) -> list[AnomalyResult]:
