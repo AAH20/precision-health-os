@@ -120,12 +120,12 @@ class ADMETPredictor:
             violations += 1
 
         # Simplified ADMET scoring
-        absorption = max(0, 1.0 - violations * 0.2)
+        absorption = max(0.0, 1.0 - violations * 0.2)
         distribution = 0.7 if molecule.logp > 0 else 0.3
         metabolism = 0.5  # Placeholder
         excretion = 0.8 if molecule.molecular_weight < 400 else 0.4
         toxicity = 0.3 if violations <= 1 else 0.7
-        bioavailability = max(0, 1.0 - violations * 0.25)
+        bioavailability = max(0.0, 1.0 - violations * 0.25)
         bbb_penetration = molecule.logp > 2 and molecule.tpsa < 90
         herg_risk = molecule.logp > 4 and molecule.molecular_weight > 400
         ames_mutagenicity = False  # Would use structural alerts

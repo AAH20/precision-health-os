@@ -142,7 +142,10 @@ class HL7v2Parser:
                 result["sending_app"] = fields[2] if len(fields) > 2 else ""
             elif segment_type == "PID":
                 result["patient_id"] = fields[3] if len(fields) > 3 else ""
-                result["patient_name"] = fields[5] if len(fields) > 5 else ""
+                # Unescape \r and \n that were escaped during creation
+                name = fields[5] if len(fields) > 5 else ""
+                name = name.replace("\\r", "\r").replace("\\n", "\n")
+                result["patient_name"] = name
 
         return result
 
@@ -151,9 +154,11 @@ class HL7v2Parser:
         timestamp = utcnow().strftime("%Y%m%d%H%M%S")
         dob = patient.get("date_of_birth")
         dob_str = dob.strftime("%Y%m%d") if isinstance(dob, datetime) else ""
+        # Escape \r and \n in names so they don't break HL7 segment delimiters
+        name = patient.get("name", "").replace("\r", "\\r").replace("\n", "\\n")
         pid = (
             f"PID|1||{patient.get('mrn', '')}^{patient.get('id', '')}"
-            f"||{patient.get('name', '')}||{dob_str}|{patient.get('sex', 'U')}"
+            f"||{name}||{dob_str}|{patient.get('sex', 'U')}"
         )
         segments = [
             f"MSH|^~\\&|PHOS|HOSPITAL|EHR|HOSPITAL|{timestamp}||ADT^{event_type}|{generate_id()}|P|2.5",
